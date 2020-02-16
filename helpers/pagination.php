@@ -72,85 +72,37 @@ class Pagination extends Helper {
         if ( ( $items - $per_page ) > 0 ) {
             // On the first page.
             if ( $cur_page === $first_page ) {
-                $hellip_start  = '';
-                $on_first_page = true;
-                $max = ( $page_count < $visible ) ? $page_count : $visible;
-                for ( $i = 0; $i < $max; $i++ ) {
-                    if ( ( $i + 1 ) > $page_count ) {
-                        $hellip_end = '';
-                        break;
-                    }
-                    $pages[ $i ]       = (object) [];
-                    $pages[ $i ]->page = $i + 1;
-                    if ( $cur_page === $pages[ $i ]->page ) {
-                        $pages[ $i ]->active = true;
-                    }
-                }
-            }
-            // On the last page.
+                list( $hellip_start, $on_first_page, $hellip_end, $pages ) = $this->handle_start_page(
+                    $page_count,
+                    $visible,
+                    $pages,
+                    $cur_page
+                );
+            } // On the last page.
             elseif ( $cur_page === $last_page ) {
-                $hellip_end   = '';
-                $on_last_page = true;
-                if ( $page_count <= $visible ) {
-                    $hellip_start = '';
-                    for ( $i = 0; $i < $page_count; $i++ ) {
-                        $pages[ $i ]       = (object) [];
-                        $pages[ $i ]->page = $i + 1;
-                        if ( $cur_page === $pages[ $i ]->page ) {
-                            $pages[ $i ]->active = true;
-                        }
-                    }
-                }
-                else {
-                    $start = $page_count - $visible + 1;
-                    for ( $i = $start; $i <= $page_count; $i++ ) {
-                        $pages[ $i ]       = (object) [];
-                        $pages[ $i ]->page = $i;
-                        if ( $cur_page === $pages[ $i ]->page ) {
-                            $pages[ $i ]->active = true;
-                        }
-                    }
-                }
-            }
-            // On a random page.
+                list( $hellip_end, $on_last_page, $hellip_start, $pages ) = $this->handle_last_page(
+                    $page_count,
+                    $visible,
+                    $pages,
+                    $cur_page
+                );
+            } // On a random page.
             else {
-                $start = $cur_page - $neighbours;
-                if ( $start <= 1 ) {
-                    $start        = 1;
-                    $hellip_start = '';
-                }
-                $end = $cur_page + $neighbours;
-                if ( $end >= $page_count ) {
-                    $end   = $page_count;
-                    $start = $start - ( ( $cur_page + $neighbours ) - $page_count );
-                    if ( $start <= 1 ) {
-                        $start        = 1;
-                        $hellip_start = '';
-                    }
-                    $hellip_end = '';
-                }
+                list( $start, $hellip_start, $end, $hellip_end ) = $this->handle_random_page(
+                    $cur_page,
+                    $neighbours,
+                    $page_count
+                );
 
                 // Display max number of pages.
-                $max_pages = $start + ( $visible - 1 );
-                if ( $max_pages <= $page_count ) {
-                    for ( $i = $start; $i <= $max_pages; $i++ ) {
-                        $pages[ $i ]       = (object) [];
-                        $pages[ $i ]->page = $i;
-                        if ( $cur_page === $pages[ $i ]->page ) {
-                            $pages[ $i ]->active = true;
-                        }
-                    }
-                }
-                // Display less.
-                else {
-                    for ( $i = $start; $i <= $end; $i++ ) {
-                        $pages[ $i ]       = (object) [];
-                        $pages[ $i ]->page = $i;
-                        if ( $cur_page === $pages[ $i ]->page ) {
-                            $pages[ $i ]->active = true;
-                        }
-                    }
-                }
+                $pages = $this->handle_page_numbers(
+                    $start,
+                    $visible,
+                    $page_count,
+                    $pages,
+                    $cur_page,
+                    $end
+                );
             }
 
             if ( $prev_page === 0 ) {
@@ -253,6 +205,133 @@ class Pagination extends Helper {
      */
     public function set_params( $params ) {
         $this->params = $params;
+    }
+
+    /**
+     * Returns array of passed, but modified values when when we were on the start page.
+     *
+     * @param int   $page_count Page count.
+     * @param int   $visible    Visibility.
+     * @param array $pages      Pages.
+     * @param int   $cur_page   Current page number.
+     *
+     * @return array
+     */
+    private function handle_start_page( int $page_count, $visible, array $pages, int $cur_page ) {
+        $hellip_start  = '';
+        $hellip_end    = '';
+        $on_first_page = true;
+        $max           = ( $page_count < $visible ) ? $page_count : $visible;
+        for ( $i = 0; $i < $max; $i ++ ) {
+            if ( ( $i + 1 ) > $page_count ) {
+                $hellip_end = '';
+                break;
+            }
+            $pages[ $i ]       = (object) [];
+            $pages[ $i ]->page = $i + 1;
+            if ( $cur_page === $pages[ $i ]->page ) {
+                $pages[ $i ]->active = true;
+            }
+        }
+
+        return [ $hellip_start, $on_first_page, $hellip_end, $pages ];
+    }
+
+    /**
+     * Returns array of passed, but modified values when when we were on the last page.
+     *
+     * @param int   $page_count
+     * @param int   $visible
+     * @param array $pages
+     * @param int   $cur_page
+     *
+     * @return array
+     */
+    private function handle_last_page( int $page_count, $visible, array $pages, int $cur_page ) {
+        $hellip_start = '';
+        $hellip_end   = '';
+        $on_last_page = true;
+
+        if ( $page_count <= $visible ) {
+            $hellip_start = '';
+            for ( $i = 0; $i < $page_count; $i ++ ) {
+                $pages[ $i ]       = (object) [];
+                $pages[ $i ]->page = $i + 1;
+                if ( $cur_page === $pages[ $i ]->page ) {
+                    $pages[ $i ]->active = true;
+                }
+            }
+        } else {
+            $start = $page_count - $visible + 1;
+            for ( $i = $start; $i <= $page_count; $i ++ ) {
+                $pages[ $i ]       = (object) [];
+                $pages[ $i ]->page = $i;
+                if ( $cur_page === $pages[ $i ]->page ) {
+                    $pages[ $i ]->active = true;
+                }
+            }
+        }
+
+        return [ $hellip_end, $on_last_page, $hellip_start, $pages ];
+    }
+
+    /**
+     * Returns array of passed, but modified values when when we were on a random page.
+     *
+     * @param int $cur_page   Current page number.
+     * @param int $neighbours Amount of neighbours.
+     * @param int $page_count Total amount of pages.
+     *
+     * @return array
+     */
+    private function handle_random_page( int $cur_page, int $neighbours, int $page_count ) {
+        $start = $cur_page - $neighbours;
+        if ( $start <= 1 ) {
+            $start        = 1;
+            $hellip_start = '';
+        }
+        $end = $cur_page + $neighbours;
+        if ( $end >= $page_count ) {
+            $end   = $page_count;
+            $start = $start - ( ( $cur_page + $neighbours ) - $page_count );
+            if ( $start <= 1 ) {
+                $start        = 1;
+                $hellip_start = '';
+            }
+            $hellip_end = '';
+        }
+
+        return [ $start, $hellip_start, $end, $hellip_end ];
+    }
+
+    /**
+     * Helper to get page numbers.
+     *
+     * @param       $start
+     * @param       $visible
+     * @param int   $page_count
+     * @param array $pages
+     * @param int   $cur_page
+     * @param       $end
+     *
+     * @return array
+     */
+    private function handle_page_numbers( $start, $visible, int $page_count, array $pages, int $cur_page, $end ) {
+        $max_pages          = $start + ( $visible - 1 );
+        $page_count_in_loop = $end;
+
+        if ( $max_pages <= $page_count ) {
+            $page_count_in_loop = $max_pages;
+        }
+        for ( $i = $start; $i <= $page_count_in_loop; $i ++ ) {
+            $pages[ $i ]       = (object) [];
+            $pages[ $i ]->page = $i;
+            if ( $cur_page === $pages[ $i ]->page ) {
+                $pages[ $i ]->active = true;
+            }
+        }
+
+        return $pages;
     }
 }
 
