@@ -29,7 +29,7 @@ class UserActivate extends \DustPress\Model {
         $key = '';
 
         if ( isset( $_COOKIE[ $activate_cookie ] ) ) {
-            $key = $_COOKIE[ $activate_cookie ];
+            $key = wp_unslash( [ $activate_cookie ] );
         }
 
         if ( ! $key ) {
