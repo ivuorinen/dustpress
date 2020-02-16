@@ -32,8 +32,10 @@ class Query {
      * @param array $args Query arguments.
      *
      * @return array|object|null Type corresponding to output type on success or null on failure.
-	 */
-	public static function get_post( $id = null, $args = array() ) {
+     * @throws \Exception DustPress\Query::get_post() requires either global post object existence or defined $id
+     *                    parameter.
+     */
+    public static function get_post( $id = null, $args = [] ) {
 
 		global $post;
 
@@ -75,23 +77,24 @@ class Query {
 		return self::cast_post_to_type( $current_post, $output );
 	}
 
-	/**
-	 * This function will query a single post and its meta.
-	 *
-	 * If the args has a key 'recursive' with the value 'true', relational
-	 * post objects are loaded recursively to get the full object.
-	 * Meta data is handled the same way as in get_post.
-	 *
-	 * @type	function
-	 * @date	20/3/2015
-	 * @since	0.0.1
-	 *
-	 * @param	int $id
-	 * @param	array $args
-	 *
+    /**
+     * This function will query a single post and its meta.
+     *
+     * If the args has a key 'recursive' with the value 'true', relational
+     * post objects are loaded recursively to get the full object.
+     * Meta data is handled the same way as in get_post.
+     *
+     * @date  2015-03-20
+     * @since 0.0.1
+     *
+     * @param int   $id   Post ID.
+     * @param array $args Query arguments.
+     *
      * @return array|object|null Type corresponding to output type on success or null on failure.
-	 */
-	public static function get_acf_post( $id = null, $args = array() ) {
+     * @throws \Exception DustPress\Query::get_acf_post() requires either global post object existence or defined $id
+     *                    parameter.
+     */
+    public static function get_acf_post( $id = null, $args = [] ) {
 
 		global $post;
 
@@ -271,19 +274,19 @@ class Query {
 		return false;
 	}
 
-	/**
-	 * This function queries multiple posts and returns also all the Advanced Custom Fields data set saved in the posts meta.
-	 * Meta data is handled the same way as in the get_posts-function.
-	 *
-	 * @type	function
-	 * @date	20/3/2015
-	 * @since	0.0.1
-	 *
-	 * @param	array $args Arguments to override the defaults defined in get_wp_query_defaults.
+    /**
+     * This function queries multiple posts and returns also all the Advanced Custom Fields
+     * data set saved in the posts meta. Meta data is handled the same way as in the get_posts-function.
      *
-	 * @return	array|boolean Array of posts as an associative array with acf fields and meta data
-	 */
-	public static function get_acf_posts( $args ) {
+     * @date  2015-03-20
+     * @since 0.0.1
+     *
+     * @param array $args Arguments to override the defaults defined in get_wp_query_defaults.
+     *
+     * @return array|boolean Array of posts as an associative array with acf fields and meta data
+     * @throws \Exception Source: self::handle_field.
+     */
+    public static function get_acf_posts( $args ) {
 
         // Some redundancy, but we need these.
         $defaults = self::get_wp_query_defaults();
@@ -405,22 +408,18 @@ class Query {
         );
     }
 
-	/**
-	 * Get meta data for a single post.
-	 *
-	 * @type	function
-	 * @date	20/3/2015
-	 * @since	0.0.1
-	 *
-	 * @param  array		&$post    	The queried post.
-	 * @param  array/string $meta_keys 	Wanted meta keys or string 'ALL' to fetch all.
-	 * @param  boolean 		$single 	If true, return only the first value of the specified meta_key.
+    /**
+     * Get meta data for a single post.
      *
-	 * @return array
-	 */
-    private static function get_post_meta( &$post, $meta_keys = NULL, $single = false ) {
-
-		$meta = array();
+     * @date  2015-03-20
+     * @since 0.0.1
+     *
+     * @param array        $post      The queried post.
+     * @param array|string $meta_keys Wanted meta keys or string 'ALL' to fetch all.
+     * @param boolean      $single    If true, return only the first value of the specified meta_key.
+     */
+    private static function get_post_meta( &$post, $meta_keys = null, $single = false ) {
+        $meta = [];
 
 		if ( $meta_keys === 'all' ) {
 		    // Get all metadata.
@@ -469,47 +468,44 @@ class Query {
 		}
 	}
 
-	/**
-	 * Used to cast posts to a desired type.
-	 * Defaults to standard WordPress object.
-	 *
-	 * @type	function
-	 * @date	26/1/2016
-	 * @since	0.3.0
+    /**
+     * Used to cast posts to a desired type.
+     * Defaults to standard WordPress object.
      *
-	 * @param  array  $post     WP post object as an array.
-	 * @param  string $type     The desired type.
-	 *
-     * @return array/object
-	 */
-	private static function cast_post_to_type( $post, $type ) {
+     * @date  2016-01-26
+     * @since 0.3.0
+     *
+     * @param array  $post WP post object as an array.
+     * @param string $type The desired type.
+     *
+     * @return array|object
+     */
+    private static function cast_post_to_type( $post, $type ) {
 
-		if ( $type === 'ARRAY_A' ) {
-			$current_post = $post->to_array();
-		} elseif ( $type === 'ARRAY_N' ) {
-            $current_post = array_values( $post->to_array() );
-		}
-		else {
-			$current_post = $post;
-		}
+        if ( $type === 'ARRAY_A' ) {
+            return $post->to_array();
+        }
+        if ( $type === 'ARRAY_N' ) {
+            return array_values( $post->to_array() );
+        }
 
-		return $current_post;
-	}
+        return $post;
+    }
 
-	/**
-	 * Wrapper for wp queries' defaults.
-	 *
-	 * @return array
-	 */
-	private static function get_wp_query_defaults() {
-		return [
-            'meta_keys' 				=> null,	// Desired keys in an array or 'all' to fetch all
-            'single'					=> true,	// Return only the first value for a meta key
-            'whole_fields' 				=> false,	// Return the entire field object for ACF fields
-            'query_object'				=> false,	// Do not return the whole WP_Query object
-            'no_found_rows' 			=> true, 	// No pagination needed
-            'update_post_meta_cache' 	=> false, 	// No post meta utilized
-            'update_post_term_cache' 	=> false, 	// No taxonomy terms utilized
+    /**
+     * Wrapper for wp queries' defaults.
+     *
+     * @return array
+     */
+    private static function get_wp_query_defaults() {
+        return [
+            'meta_keys'              => null,  // Desired keys in an array or 'all' to fetch all
+            'single'                 => true,  // Return only the first value for a meta key
+            'whole_fields'           => false, // Return the entire field object for ACF fields
+            'query_object'           => false, // Do not return the whole WP_Query object
+            'no_found_rows'          => true,  // No pagination needed
+            'update_post_meta_cache' => false, // No post meta utilized
+            'update_post_term_cache' => false, // No taxonomy terms utilized
         ];
     }
 }
