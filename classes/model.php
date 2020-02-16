@@ -148,14 +148,11 @@ class Model {
         if ( ! isset( $model ) ) {
             return $this->get_ancestor( $this );
         }
-        else {
-            if ( isset( $model->parent ) ) {
-                return $this->get_ancestor( $model->parent );
-            }
-            else {
-                return $model;
-            }
+        if ( isset( $model->parent ) ) {
+            return $this->get_ancestor( $model->parent );
         }
+
+        return $model;
     }
 
     /**
@@ -202,10 +199,9 @@ class Model {
             foreach ( $values as $key => $value ) {
                 if ( isset( $method_names[ $value ] ) ) {
                     unset( $methods[ $model ][ $key ] );
+                    continue;
                 }
-                else {
-                    $method_names[ $value ] = true;
-                }
+                $method_names[ $value ] = true;
             }
         }
 
@@ -234,39 +230,36 @@ class Model {
                     if ( ! $this->in_array_r( $method_item, $functions ) ) {
                         continue;
                     }
-                    else {
-                        if ( ! $this->is_function_allowed( $method_item ) ) {
-                            die( json_encode( [ "error" => "Method '". $method_item ."' is not allowed to be run via AJAX or does not exist." ] ) );
-                        }
-                        else if ( $reflection->isProtected() || $reflection->isPrivate() ) {
-                            $private_methods[] = $method_item;
-                            continue;
-                        }
-                        else {
-                            // If the method has parameters, it should be run manually
-                            if ( $reflection->getNumberOfParameters() > 0 ) {
-                                unset( $class_methods[ $index ] );
-                            }
-                            else {
-                                $class_methods[ $index ] = array( $class, $method_item );
-                            }
-                        }
+                    if ( ! $this->is_function_allowed( $method_item ) ) {
+                        $error_txt = sprintf(
+                            "Method '%s' is not allowed to be run via AJAX or does not exist.",
+                            $method_item
+                        );
+                        die( wp_json_encode( [ 'error' => $error_txt ] ) );
                     }
-                }
-                else {
-                    if ( $reflection->isPublic() ) {
-                        // If the method has parameters, it should be run manually
-                        if ( $reflection->getNumberOfParameters() > 0 ) {
-                            unset( $class_methods[ $index ] );
-                        }
-                        else {
-                            $class_methods[ $index ] = array( $class, $method_item );
-                        }
+                    if ( $reflection->isProtected() || $reflection->isPrivate() ) {
+                        $private_methods[] = $method_item;
+                        continue;
                     }
-                    else {
+                    // If the method has parameters, it should be run manually
+                    if ( $reflection->getNumberOfParameters() > 0 ) {
                         unset( $class_methods[ $index ] );
+                        continue;
                     }
+                    $class_methods[ $index ] = [ $class, $method_item ];
+                    continue;
                 }
+
+                if ( $reflection->isPublic() ) {
+                    // If the method has parameters, it should be run manually
+                    if ( $reflection->getNumberOfParameters() > 0 ) {
+                        unset( $class_methods[ $index ] );
+                        continue;
+                    }
+                    $class_methods[ $index ] = [ $class, $method_item ];
+                    continue;
+                }
+                unset( $class_methods[ $index ] );
             }
         }
 
@@ -290,36 +283,35 @@ class Model {
         $methods = array_reverse( $methods );
 
         // Loop through all public methods and run the ones we wanted to deliver the data to the views.
-        foreach( $methods as $class => $class_methods ) {
-            foreach( $class_methods as $name => $m ) {
-                if ( is_array( $m ) ) {
-                    if ( isset( $m[1] ) && is_string( $m[1] ) ) {
-                        if ( $m[1] == "__construct" ) {
-                            continue;
-                        }
+        foreach ( $methods as $class => $class_methods ) {
+            foreach ( $class_methods as $name => $m ) {
+                if ( is_array( $m ) && isset( $m[1] ) && is_string( $m[1] ) ) {
+                    if ( $m[1] === '__construct' ) {
+                        continue;
+                    }
 
-                        $method = str_replace( "bind_", "", $m[1] );
+                    $method = str_replace( 'bind_', '', $m[1] );
 
-                        if ( ! isset( $this->data[ $this->class_name ] ) ) {
-                            $this->data[ $this->class_name ] = (object)[];
-                        }
+                    if ( ! isset( $this->data[ $this->class_name ] ) ) {
+                        $this->data[ $this->class_name ] = (object) [];
+                    }
 
-                        $data = $this->run_function( $m[1], $class );
+                    $data = $this->run_function( $m[1], $class );
 
-                        if ( $tidy ) {
-                            $tidy_data->{ $m[1] } = $data;
-                        }
-                        else {
-                            if ( ! is_null( $data ) ) {
-                                $content = (array) $this->data[ $this->class_name ];
-                                $content[ $method ] = $data;
-                                $this->data[ $this->class_name ] = (object) $content;
-                            }
-                        }
+                    if ( $tidy ) {
+                        $tidy_data->{$m[1]} = $data;
+                        continue;
+                    }
+
+                    if ( ! is_null( $data ) ) {
+                        $content                         = (array) $this->data[ $this->class_name ];
+                        $content[ $method ]              = $data;
+                        $this->data[ $this->class_name ] = (object) $content;
                     }
                 }
-                else if ( is_callable( $m ) ) {
-                    if ( $m == "__construct" ) {
+
+                if ( is_callable( $m ) ) {
+                    if ( $m === '__construct' ) {
                         continue;
                     }
 
@@ -333,11 +325,10 @@ class Model {
 
                     if ( ! is_null( $data ) ) {
                         if ( $tidy ) {
-                            $tidy_data->{ $method } = $data;
+                            $tidy_data->{$method} = $data;
+                            continue;
                         }
-                        else {
-                            $this->data[ $this->class_name ]->{ $method } = $data;
-                        }
+                        $this->data[ $this->class_name ]->{$method} = $data;
                     }
                 }
 
@@ -354,16 +345,16 @@ class Model {
             foreach ( $private_methods as $method ) {
                 $data = $this->run_restricted( $method );
 
-                if ( ! is_null( $data ) ) {
-                    if ( $tidy ) {
-                        $tidy_data->{ $method } = $data;
-                    }
-                    else {
-                        $content = (array) $this->data[ $this->class_name ];
-                        $content[ $method ] = $data;
-                        $this->data[ $this->class_name ] = (object) $content;
-                    }
+                if ( is_null( $data ) ) {
+                    continue;
                 }
+                if ( $tidy ) {
+                    $tidy_data->{$method} = $data;
+                    continue;
+                }
+                $content                         = (array) $this->data[ $this->class_name ];
+                $content[ $method ]              = $data;
+                $this->data[ $this->class_name ] = (object) $content;
             }
         }
 
@@ -372,8 +363,8 @@ class Model {
 
             return $tidy_data;
         }
-        else {
-            return $this->data[ $this->class_name ];
+
+        return $this->data[ $this->class_name ];
         }
     }
 
@@ -394,13 +385,11 @@ class Model {
         $rc   = new \ReflectionClass( $class_name );
         $rmpu = $rc->getMethods();
 
-        if ( isset( $methods ) ) {
-            if ( ! isset( $methods[ $class_name ] ) ) {
-                $methods[ $class_name ] = array();
-            }
+        if ( ! isset( $methods ) ) {
+            $methods = [];
         }
-        else {
-            $methods = array();
+        if ( ! isset( $methods[ $class_name ] ) ) {
+            $methods[ $class_name ] = [];
         }
 
         foreach ( $rmpu as $r ) {
@@ -436,34 +425,36 @@ class Model {
         }
 
         $this->class_name = get_class( $this );
-        if ( is_string( $name ) ) {
-            $model = new $name( $args, $this );
+        if ( ! is_string( $name ) ) {
+            throw new \Exception(
+                'DustPress error: bind_sub was called with invalid class name: ' .
+                print_r( $name, true )
+            );
         }
-        else {
-            throw new \Exception("DustPress error: bind_sub was called with invalid class name: " . print_r( $name, true ) );
-        }
+
+        $model = new $name( $args, $this );
 
         // If the submodel is not on the root level, set it under the current submodel.
         if ( $this->parent ) {
             $data       = $model->fetch_data();
             $class_name = $model->class_name;
 
-            if ( isset( $this->data[ $this->class_name ]->{ $class_name } ) ) {
-                $this->data[ $this->class_name ]->{$class_name } = array_merge( (array)$this->data[ $this->class_name ]->{ $class_name }, (array)$data );
+            if ( isset( $this->data[ $this->class_name ]->{$class_name} ) ) {
+                $this->data[ $this->class_name ]->{$class_name} = array_merge(
+                    (array) $this->data[ $this->class_name ]->{$class_name},
+                    (array) $data
+                );
+            } else {
+                $this->data[ $this->class_name ]->{$class_name} = $data;
             }
-            else {
-                $this->data[ $this->class_name ]->{ $class_name } = $data;
-            }
-        }
-        // Set submodel under the main model.
+        } // Set submodel under the main model.
         else {
             $data       = $model->fetch_data();
             $class_name = $model->class_name;
 
             if ( isset( $this->data[ $class_name ] ) ) {
-                $this->data[ $class_name ] = array_merge( (array)$this->data[ $class_name ], (array)$data );
-            }
-            else {
+                $this->data[ $class_name ] = array_merge( (array) $this->data[ $class_name ], (array) $data );
+            } else {
                 $this->data[ $class_name ] = $data;
             }
         }
@@ -515,34 +506,46 @@ class Model {
 
         if ( $model ) {
             // Create a place to store the wanted data in the global data structure.
-            if ( ! isset( $this->data[ $model ] ) ) $this->data[ $model ] = new \stdClass();
+            if ( ! isset( $this->data[ $model ] ) ) {
+                $this->data[ $model ] = new \stdClass();
+            }
 
             if ( ! isset( $this->data[ $model ] ) ) {
-                $this->data[ $model ] = (object)[];
+                $this->data[ $model ] = (object) [];
             }
-            $this->data[ $model ]->{ $key } = $data;
-        }
-        else {
-            // Create a place to store the wanted data in the global data structure.
-            if ( ! isset( $this->data[ $this->class_name ] ) ) $this->data[ $this->class_name ] = new \stdClass();
+            $this->data[ $model ]->{$key} = $data;
 
-            if ( ! $this->parent ) {
-                if ( is_array( $data ) ) {
-                    if ( isset( $this->data[ $this->class_name ]->{ $key } ) ) {
-                        $this->data[ $this->class_name ]->{ $key } = array_merge( (array) $this->data[ $this->class_name ]->{ $key }, $data );
-                    }
-                    else {
-                        $this->data[ $this->class_name ]->{ $key } = $data;
-                    }
-                }
-                else {
-                    $this->data[ $this->class_name ]->{ $key } = $data;
-                }
-            }
-            else {
-                $this->data[ $this->class_name ]->{ $key } = $data;
-            }
+            return true;
         }
+
+        // Create a place to store the wanted data in the global data structure.
+        if ( ! isset( $this->data[ $this->class_name ] ) ) {
+            $this->data[ $this->class_name ] = new \stdClass();
+        }
+
+        if ( $this->parent ) {
+            $this->data[ $this->class_name ]->{$key} = $data;
+
+            return true;
+        }
+
+        if ( ! is_array( $data ) ) {
+            $this->data[ $this->class_name ]->{$key} = $data;
+
+            return true;
+        }
+
+        if ( isset( $this->data[ $this->class_name ]->{$key} ) ) {
+            $this->data[ $this->class_name ]->{$key} = array_merge(
+                (array) $this->data[ $this->class_name ]->{$key},
+                $data
+            );
+
+            return true;
+        }
+        $this->data[ $this->class_name ]->{$key} = $data;
+
+        return true;
     }
 
     /**
@@ -573,17 +576,21 @@ class Model {
      * @return bool
      */
     public function set_template( $template ) {
+        if ( ! $template ) {
+            return false;
+        }
+
         $ancestor = $this->get_ancestor();
 
-        if ( $template ) {
+        if ( $this === $ancestor ) {
+            $this->template = $template;
 
-            if ( $this === $ancestor ) {
-                $this->template = $template;
-            }
-            else {
-                $ancestor->set_template( $template );
-            }
+            return true;
         }
+
+        $ancestor->set_template( $template );
+
+        return true;
     }
 
     /**
@@ -616,11 +623,9 @@ class Model {
             ? call_user_func( $class . '::' . $m )
             : call_user_func( [ $this, $m ] );
 
+        $subs = null;
         if ( isset( $this->called_subs ) ) {
             $subs = $this->called_subs;
-        }
-        else {
-            $subs = null;
         }
 
         $this->maybe_cache( $m, $data, $subs );
@@ -754,19 +759,11 @@ class Model {
     private function is_function_allowed( $function ) {
         if ( ! defined( 'DOING_AJAX' ) ) {
             $reflection = new \ReflectionMethod( $this, $function );
-            if ( $reflection->isPublic() ) {
-                return true;
-            }
-            else {
-                return false;
-            }
+
+            return $reflection->isPublic();
         }
-        else if ( isset( $this->api ) && is_array( $this->api ) && in_array( $function, $this->api ) ) {
-            return true;
-        }
-        else {
-            return false;
-        }
+
+        return isset( $this->api ) && is_array( $this->api ) && in_array( $function, $this->api, true );
     }
 
     /**
@@ -806,9 +803,10 @@ class Model {
         if ( $this->is_function_allowed( $function ) ) {
             return $this->run_function( $function );
         }
-        else {
-            return (object)["error" => "Wanted function does not exist in the allowed functions list."];
-        }
+
+        return (object) [
+            'error' => 'Wanted function does not exist in the allowed functions list.',
+        ];
     }
 
     /**

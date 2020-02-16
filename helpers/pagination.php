@@ -57,11 +57,9 @@ class Pagination extends Helper {
         $strings  = wp_parse_args( $strings, $defaults );
 
         // Prevent dividing if there are zero items.
+        $page_count = 1;
         if ( $per_page > 0 ) {
             $page_count = (int) ceil( $items / $per_page );
-        }
-        else {
-            $page_count = 1;
         }
 
         $first_page = 1;
@@ -213,40 +211,39 @@ class Pagination extends Helper {
      * @return string
      */
     public function build_page_link() {
-        $query_string = filter_var( $_SERVER['QUERY_STRING'], FILTER_SANITIZE_STRING );
+        $query_string = filter_var(
+            $_SERVER['QUERY_STRING'],
+            FILTER_SANITIZE_STRING
+        );
         $page_link    = '?';
-        // User passed get parameters
-        if ( $query_string ) {
-            // A page queried.
-            if ( strpos( $query_string, $this->page_var ) !== false ) {
-                $idx = 1;
-                foreach ( $_GET as $key => $value ) {
-                    if ( $key !== $this->page_var ) {
-                        if ( is_array( $value ) ) {
-                            foreach ( $value as $v ) {
-                                $page_link .= rawurlencode( $key ) . '%5B%5D=';
-                                $page_link .= rawurlencode( $v ) . '&';
-                            }
-                        }
-                        else {
-                            $page_link .= rawurlencode( $key ) . '=' . rawurlencode( $value ) . '&';
-                        }
-                    }
-                    $idx++;
-                }
-                $page_link .= $this->page_var . '=';
-            }
-            // No page queried.
-            else {
-                $page_link .= $query_string . '&' . $this->page_var . '=';
-            }
-        }
+
         // No get parameters
-        else {
-            $page_link .= $this->page_var . '=';
+        if ( ! $query_string ) {
+            return $page_link . $this->page_var . '=';
         }
 
-        return $page_link;
+        // User passed get parameters
+        if ( strpos( $query_string, $this->page_var ) === false ) {
+            // No page queried.
+            return $page_link . $query_string . '&' . $this->page_var . '=';
+        }
+
+        // A page queried.
+        foreach ( $_GET as $key => $value ) {
+            if ( $key === $this->page_var ) {
+                continue;
+            }
+            if ( ! is_array( $value ) ) {
+                $page_link .= rawurlencode( $key ) . '=' . rawurlencode( $value ) . '&';
+                continue;
+            }
+            foreach ( $value as $v ) {
+                $page_link .= rawurlencode( $key ) . '%5B%5D=';
+                $page_link .= rawurlencode( $v ) . '&';
+            }
+        }
+
+        return $page_link . $this->page_var . '=';
     }
 
     /**

@@ -49,17 +49,14 @@ class Helper {
         $this->bodies  = $bodies;
         $this->params  = $params;
 
-		if ( ! isset( $this->bodies->dummy ) ) {
-			if ( method_exists( $this, "init" ) ) {
-				return $this->init();
-			}
-			else if ( method_exists( $this, "output" ) ) {
-				return $this->chunk->write( $this->output() );
-			}
-		} else {
-            if ( method_exists( $this, "prerun" ) ) {
-                $this->prerun();
-            }
+        if ( isset( $this->bodies->dummy ) && method_exists( $this, 'prerun' ) ) {
+            $this->prerun();
         }
-	}
+        if ( method_exists( $this, 'init' ) ) {
+            return $this->init();
+        }
+        if ( method_exists( $this, 'output' ) ) {
+            return $this->chunk->write( $this->output() );
+        }
+    }
 }

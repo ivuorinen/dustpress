@@ -24,74 +24,65 @@ class Menu extends Helper {
 
         if ( ! isset( $this->params->menu_name ) && ! isset( $this->params->menu_id ) ) {
             return $this->chunk->write( 'DustPress menu helper error: No menu specified.' );
-        } else if ( isset( $this->params->menu_id ) ) {
-            $menu_id = $this->params->menu_id;
-            $id_given = true;
-        } else {
-            $menu_name = $this->params->menu_name;
         }
 
+        $menu_name = $this->params->menu_name;
+
+        $menu_id = null;
+        if ( isset( $this->params->menu_id ) ) {
+            $menu_id = $this->params->menu_id;
+        }
+
+        $parent = 0;
         if ( isset( $this->params->parent ) ) {
             $parent = $this->params->parent;
-        } else {
-            $parent = 0;
         }
 
+        $depth = PHP_INT_MAX;
         if ( isset( $this->params->depth ) ) {
             $depth = $this->params->depth;
-        } else {
-            $depth = PHP_INT_MAX;
         }
 
+        $override = null;
         if ( isset( $this->params->override ) ) {
             $override = $this->params->override;
-        } else {
-            $override = null;
         }
 
+        $ul_classes = '';
         if ( isset( $this->params->ul_classes ) ) {
             $ul_classes = $this->params->ul_classes;
-        } else {
-            $ul_classes = '';
         }
 
+        $ul_id = '';
         if ( isset( $this->params->ul_id ) ) {
             $ul_id = $this->params->ul_id;
-        } else {
-            $ul_id = '';
         }
 
+        $show_submenu = true;
         if ( isset( $this->params->show_submenu ) ) {
             $show_submenu = $this->params->show_submenu;
-        } else {
-            $show_submenu = true;
         }
 
+        $menu_partial = 'menu';
         if ( isset( $this->params->menu_partial ) ) {
             $menu_partial = $this->params->menu_partial;
-        } else {
-            $menu_partial = "menu";
         }
 
+        $menuitem_partial = 'menuitem';
         if ( isset( $this->params->menuitem_partial ) ) {
             $menuitem_partial = $this->params->menuitem_partial;
-        } else {
-            $menuitem_partial = "menuitem";
         }
 
+        $custom_data = null;
         if ( isset( $this->params->data ) ) {
             $custom_data = $this->params->data;
-        } else {
-            $custom_data = null;
         }
 
         $menu = new \stdClass();
 
-        if ( isset( $menu_name ) ) {
-            $menu_data = self::get_menu_data( $menu_name, $parent, $override );
-        } else {
-            $menu_data = self::get_menu_data( $menu_id, $parent, $override, true );
-        }
+        $menu_data = isset( $menu_name )
+            ? self::get_menu_data( $menu_name, $parent, $override )
+            : self::get_menu_data( $menu_id, $parent, $override, true );
 
         $menu->menu_object  = $menu_data['menu_object'];
         $menu->items        = $menu_data['menu_items'];
@@ -152,53 +143,38 @@ class Menu extends Helper {
 
         if ( $menu_id_given ) {
             $menu_object = \wp_get_nav_menu_object( $menu_name );
-        } else {
-            if ( ( $locations ) && isset( $locations[ $menu_name ] ) ) {
-                $menu_object = \wp_get_nav_menu_object( $locations[ $menu_name ] );
-            }
+        } elseif ( ( $locations ) && isset( $locations[ $menu_name ] ) ) {
+            $menu_object = \wp_get_nav_menu_object( $locations[ $menu_name ] );
         }
 
-        if ( ! empty( $menu_object ) ) {
-            $menu_items = static::get_cached_menu_items( $menu_object->term_id );
-
-            if ( empty( $menu_items ) || \is_customize_preview() ) {
-                $menu_items = \wp_get_nav_menu_items( $menu_object );
-
-                if ( ! empty( $menu_items ) ) {
-                    static::set_cached_menu_items( $menu_object->term_id, $menu_items );
-                }
-            }
-
-            // Add menu object location to the menu object.
-            // You can use this to filter specific menu items.
-            if ( ! empty( $menu_object->term_id ) && is_array( $locations ) ) {
-                $menu_object->location = array_search( $menu_object->term_id, $locations );
-            }
-        }
-        else {
+        if ( empty( $menu_object ) ) {
             return null;
         }
 
-        $parent_id = 0;
+        $menu_items = static::get_cached_menu_items( $menu_object->term_id );
 
-        if ( $parent ) {
-            if ( count( $menu_items ) > 0 ) {
-                foreach ( $menu_items as $item ) {
-                    if ( $item->object_id == $parent ) {
-                        $parent_id = $item->ID;
-                        break;
-                    }
-                }
+        if ( empty( $menu_items ) || \is_customize_preview() ) {
+            $menu_items = \wp_get_nav_menu_items( $menu_object );
+
+            if ( ! empty( $menu_items ) ) {
+                static::set_cached_menu_items( $menu_object->term_id, $menu_items );
             }
         }
 
-        if ( $menu_items ) {
+        // Add menu object location to the menu object.
+        // You can use this to filter specific menu items.
+        if ( ! empty( $menu_object->term_id ) && is_array( $locations ) ) {
+            $menu_object->location = array_search( $menu_object->term_id, $locations, true );
+        }
 
+        $parent_id = self::get_menu_parent_id( $parent, $menu_items );
+
+        if ( $menu_items ) {
             $built_menu_items = self::build_menu( $menu_items, $parent_id, null, $override );
 
             $active = array_keys( $built_menu_items, 'active' );
 
-            foreach( $active as $index ) {
+            foreach ( $active as $index ) {
                 unset( $built_menu_items[ $index ] );
             }
 
@@ -207,12 +183,44 @@ class Menu extends Helper {
             }
 
             // return menu object and menu items
-            $menu = [];
-            $menu['menu_object'] = apply_filters( 'dustpress/menu/object/location=' . $menu_object->location, $menu_object );
-            $menu['menu_items'] = apply_filters( 'dustpress/menu/items/location=' . $menu_object->location, $built_menu_items );
+            $menu                = [];
+            $menu['menu_object'] = apply_filters(
+                'dustpress/menu/object/location=' . $menu_object->location,
+                $menu_object
+            );
+            $menu['menu_items']  = apply_filters(
+                'dustpress/menu/items/location=' . $menu_object->location,
+                $built_menu_items
+            );
 
-            return apply_filters( 'dustpress/menu', $menu );
+            return apply_filters(
+                'dustpress/menu',
+                $menu
+            );
         }
+    }
+
+    /**
+     * Helper method for self::get_menu_data
+     *
+     * @param int        $parent     Parent ID.
+     * @param array|bool $menu_items Items to search from.
+     *
+     * @return int
+     */
+    private static function get_menu_parent_id( $parent, $menu_items ) {
+        $parent_id = 0;
+
+        if ( $parent && count( $menu_items ) > 0 ) {
+            foreach ( $menu_items as $item ) {
+                if ( $item->object_id === $parent ) {
+                    $parent_id = $item->ID;
+                    break;
+                }
+            }
+        }
+
+        return $parent_id;
     }
 
     /**
@@ -307,18 +315,30 @@ class Menu extends Helper {
         if ( \is_category() || \is_tag() || \is_tax() ) {
             $term_id = \get_queried_object()->term_id;
 
-            $return = ( $item->object_id == $term_id && 'taxonomy' == $item->type )
-                      ||  ( $item->object_id == $override );
-        }
-        else {
-            $return = ( \get_the_ID() == $item->object_id
-                        &&  'post_type' == $item->type )
-                      // Check if on a static page that shows posts.
-                      ||  ( \is_home() && ! \is_front_page() && \get_queried_object_id() == $item->object_id )
-                      ||  ( $item->object_id == $override );
+            $return = (
+                ( $item->object_id === $term_id && 'taxonomy' === $item->type ) ||
+                ( $item->object_id === $override )
+            );
+
+            return apply_filters(
+                'dustpress/menu/is_current',
+                $return,
+                $item
+            );
         }
 
-        return apply_filters( "dustpress/menu/is_current", $return, $item );
+        $return = (
+            ( \get_the_ID() === $item->object_id && 'post_type' === $item->type )
+            // Check if on a static page that shows posts.
+            || ( \is_home() && ! \is_front_page() && \get_queried_object_id() === $item->object_id )
+            || ( $item->object_id === $override )
+        );
+
+        return apply_filters(
+            'dustpress/menu/is_current',
+            $return,
+            $item
+        );
     }
 
     /**

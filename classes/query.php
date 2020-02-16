@@ -362,10 +362,10 @@ class Query {
         if ( $query_object || false === $no_found_rows ) {
             // Return the whole query object, if wanted or the query wants data for pagination.
             return self::parse_query_object( self::$query );
-        } else {
-            // Return only the posts
-            return self::$query->posts;
         }
+
+        // Return only the posts
+        return self::$query->posts;
     }
 
     /**

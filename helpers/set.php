@@ -16,11 +16,10 @@ class Set extends Helper {
         $root = $this->find_root( $this->context );
 
         // Key is a mandatory parameter
-        if ( isset( $this->params->key ) ) {
-            $key = $this->params->key;
-        } else {
+        if ( ! isset( $this->params->key ) ) {
             return $this->chunk->write( 'DustPress set helper error: No key specified.' );
         }
+        $key = $this->params->key;
 
         // It also must be a string
         if ( ! is_string( $key ) ) {
@@ -30,24 +29,22 @@ class Set extends Helper {
         // At least one of the actions we need should be there
         if ( ! $this->action_specified() ) {
             return $this->chunk->write( 'DustPress set helper error: No action specified.' );
-        } else {
-            // Set a specific value to a variable
-            if ( isset( $this->params->value ) ) {
-                if ( is_array( $root->head->value ) ) {
-                    $root->head->value[ $key ] = $this->params->value;              
-                }
-                else if ( is_object( $root->head->value ) ) {
-                    $root->head->value->{$key} = $this->params->value;
-                }
+        }
+        // Set a specific value to a variable
+        if ( isset( $this->params->value ) ) {
+            if ( is_array( $root->head->value ) ) {
+                $root->head->value[ $key ] = $this->params->value;
+            } elseif ( is_object( $root->head->value ) ) {
+                $root->head->value->{$key} = $this->params->value;
             }
-            // Perform mathematic operations on a variable
-            else {
-                foreach( $this->allowed_methods as $method ) {
-                    if ( isset( $this->params->{$method} ) ) {
-                        $this->method( $root, $key, $this->params->{$method}, $method );
-                        break;
-                    }
-                }
+
+            return $this->chunk;
+        }
+        // Perform mathematical operations on a variable
+        foreach ( $this->allowed_methods as $method ) {
+            if ( isset( $this->params->{$method} ) ) {
+                $this->method( $root, $key, $this->params->{$method}, $method );
+                break;
             }
         }
 
@@ -66,11 +63,7 @@ class Set extends Helper {
             }
         }
 
-        if ( isset( $this->params->value ) ) {
-            return true;
-        }
-
-        return false;
+        return isset( $this->params->value );
     }
 
     /**

@@ -14,18 +14,22 @@ class Password extends Helper {
         if ( empty( $post->post_password ) || ! post_password_required( $id ) ) {
             return $this->chunk->render( $this->bodies->block, $this->context );
         }
-        else {
-            if ( post_password_required( $id ) ) {
-                // Populate data object to be passed to the password form template
-                $data = new \stdClass();
-                $data->url = esc_url( site_url( 'wp-login.php?action=postpass', 'login_post' ) );
-                $data->label = 'pwbox-'. $id;
-                return $this->chunk->write( dustpress()->render([
-                    'partial' => 'password_form',
-                    'data'    => $data,
-                    'echo'    => false
-                ]) );
-            }
+
+        if ( post_password_required( $id ) ) {
+            // Populate data object to be passed to the password form template
+            $data        = new \stdClass();
+            $data->url   = esc_url( site_url( 'wp-login.php?action=postpass', 'login_post' ) );
+            $data->label = 'pwbox-' . $id;
+
+            return $this->chunk->write(
+                dustpress()->render(
+                    [
+                        'partial' => 'password_form',
+                        'data'    => $data,
+                        'echo'    => false,
+                    ]
+                )
+            );
         }
     }
 }

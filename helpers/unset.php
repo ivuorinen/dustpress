@@ -8,15 +8,15 @@ class Unset_Helper extends Helper {
         $root = $this->find_root( $this->context );
 
         // Key is a mandatory parameter
-        if ( isset( $this->params->key ) ) {
-            $key = $this->params->key;
-        } else {
+        if ( ! isset( $this->params->key ) ) {
             return $this->chunk->write( 'DustPress unset helper error: No key specified.' );
         }
         // It also must be a string
-        if ( ! is_string( $key ) ) {
+        if ( ! is_string( $this->params->key ) ) {
             return $this->chunk->write( 'DustPress unset helper error: Key is not a string.' );
         }
+
+        $key = $this->params->key;
 
         if ( is_array( $root->head->value ) ) {
             unset( $root->head->value[ $key ] );

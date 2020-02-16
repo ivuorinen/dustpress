@@ -335,6 +335,9 @@ class Image extends Helper {
         // The default WordPress image sizes. Exclude the thumbnail size.
         $default_image_sizes = [ 'medium', 'medium_large', 'large' ];
 
+        // Predefine Image sizes, since it'll be used later
+        $image_sizes = [];
+
         // Loop through the sizes and get the corresponding options from the db.
         foreach ( $default_image_sizes as $size ) {
             $image_sizes[ $size ]['width']  = intval( get_option( "{$size}_size_w" ) );
