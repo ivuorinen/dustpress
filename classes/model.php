@@ -208,13 +208,7 @@ class Model {
         unset( $method_names );
 
         // Check that all asked functions exist
-        if ( is_array( $functions ) && count( $functions ) > 0 ) {
-            foreach ( $functions as $function ) {
-                if ( ! $this->in_array_r( $function, $methods ) ) {
-                    die( json_encode( [ "error" => "Method '". $function ."' is not allowed to be run via AJAX or does not exist." ] ) );
-                }
-            }
-        }
+        $this->check_methods_exists( $functions, $methods );
 
         // If we are on an AJAX call, we may want to run some private or protected functions too
         $private_methods = [];
@@ -365,6 +359,26 @@ class Model {
         }
 
         return $this->data[ $this->class_name ];
+    }
+
+    /**
+     * Check that all the functions can be found and are allowed to run.
+     * Extracted from fetch_data.
+     *
+     * @param array $functions
+     * @param array $methods
+     */
+    private function check_methods_exists( $functions, array $methods ) {
+        if ( is_array( $functions ) && count( $functions ) > 0 ) {
+            foreach ( $functions as $function ) {
+                if ( ! $this->in_array_r( $function, $methods ) ) {
+                    $error_txt = sprintf(
+                        "Method '%s' is not allowed to be run via AJAX or does not exist.",
+                        $function
+                    );
+                    die( wp_json_encode( [ 'error' => $error_txt ] ) );
+                }
+            }
         }
     }
 
