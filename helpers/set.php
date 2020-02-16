@@ -1,13 +1,14 @@
 <?php
+
 namespace DustPress;
 
 class Set extends Helper {
     private $allowed_methods = [
-        "add",
-        "subtract",
-        "multiply",
-        "divide",
-        "mod"
+        'add',
+        'subtract',
+        'multiply',
+        'divide',
+        'mod',
     ];
 
     public function init() {
@@ -49,13 +50,17 @@ class Set extends Helper {
                 }
             }
         }
-        
+
         return $this->chunk;
     }
 
-    // Do we have an action that we need?
+    /**
+     * Do we have an action that we need?
+     *
+     * @return bool
+     */
     private function action_specified() {
-        foreach( $this->allowed_methods as $method ) {
+        foreach ( $this->allowed_methods as $method ) {
             if ( isset( $this->params->{$method} ) ) {
                 return true;
             }
@@ -68,23 +73,35 @@ class Set extends Helper {
         return false;
     }
 
-    // Recursive function to find the root of the data tree
+    /**
+     * Recursive function to find the root of the data tree
+     *
+     * @param object $ctx Context.
+     *
+     * @return mixed
+     */
     private function find_root( $ctx ) {
-        if ( isset( $ctx->parent ) ) {
-            return $this->find_root( $ctx->parent );
-        }
-        else {
-            return $ctx;
-        }
+        return isset( $ctx->parent )
+            ? $this->find_root( $ctx->parent )
+            : $ctx;
     }
 
-    // Perform mathematic operations
+    /**
+     * Perform mathematical operations
+     *
+     * @param object     $root
+     * @param int|string $key
+     * @param int|double $value
+     * @param string     $method
+     *
+     * @return mixed
+     */
     private function method( &$root, $key, $value, $method ) {
         if ( ! is_numeric( $value ) ) {
-            return $this->chunk->write( 'DustPress set helper error: '. $method .' value is not a number.' );
+            return $this->chunk->write( 'DustPress set helper error: ' . $method . ' value is not a number.' );
         }
 
-        // If there is no such variable, define it 
+        // If there is no such variable, define it
         if ( is_array( $root->head->value ) && ! isset( $root->head->value[ $key ] ) ) {
             $root->head->value[ $key ] = 0;
         }
@@ -92,45 +109,40 @@ class Set extends Helper {
             $root->head->value->{$key} = 0;
         }
 
-        switch( $method ) {
+        switch ( $method ) {
             case 'add':
                 if ( is_array( $root->head->value ) ) {
                     $root->head->value[ $key ] += $value;
-                }
-                else if ( is_object( $root->head->value ) ) {
-                    $root->head->value->{$key} += $value;   
+                } elseif ( is_object( $root->head->value ) ) {
+                    $root->head->value->{$key} += $value;
                 }
                 break;
             case 'subtract':
                 if ( is_array( $root->head->value ) ) {
                     $root->head->value[ $key ] -= $value;
-                }
-                else if ( is_object( $root->head->value ) ) {
-                    $root->head->value->{$key} -= $value;   
+                } elseif ( is_object( $root->head->value ) ) {
+                    $root->head->value->{$key} -= $value;
                 }
                 break;
             case 'multiply':
                 if ( is_array( $root->head->value ) ) {
                     $root->head->value[ $key ] *= $value;
-                }
-                else if ( is_object( $root->head->value ) ) {
-                    $root->head->value->{$key} *= $value;   
+                } elseif ( is_object( $root->head->value ) ) {
+                    $root->head->value->{$key} *= $value;
                 }
                 break;
             case 'divide':
                 if ( is_array( $root->head->value ) ) {
                     $root->head->value[ $key ] /= $value;
-                }
-                else if ( is_object( $root->head->value ) ) {
-                    $root->head->value->{$key} /= $value;   
+                } elseif ( is_object( $root->head->value ) ) {
+                    $root->head->value->{$key} /= $value;
                 }
                 break;
             case 'mod':
                 if ( is_array( $root->head->value ) ) {
                     $root->head->value[ $key ] %= $value;
-                }
-                else if ( is_object( $root->head->value ) ) {
-                    $root->head->value->{$key} %= $value;   
+                } elseif ( is_object( $root->head->value ) ) {
+                    $root->head->value->{$key} %= $value;
                 }
                 break;
         }

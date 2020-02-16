@@ -1,14 +1,12 @@
 <?php
+
 namespace DustPress;
 
 class Password extends Helper {
     public function init() {
-        if ( isset( $this->params->id ) ) {
-            $id = $this->params->id;
-        }
-        else {
-            $id = get_the_ID();
-        }
+        $id = isset( $this->params->id )
+            ? $this->params->id
+            : get_the_ID();
 
         $post = get_post( $id );
 

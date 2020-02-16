@@ -18,7 +18,7 @@ class Menu extends Helper {
     /**
      * Renders and outputs the menu HTML.
      *
-     * @return $output (string)
+     * @return string $output (string)
      */
     public function output() {
 
@@ -93,27 +93,35 @@ class Menu extends Helper {
             $menu_data = self::get_menu_data( $menu_id, $parent, $override, true );
         }
 
-        $menu->menu_object = $menu_data['menu_object'];
-        $menu->items = $menu_data['menu_items'];
-        $menu->ul_classes = $ul_classes;
-        $menu->ul_id = $ul_id;
+        $menu->menu_object  = $menu_data['menu_object'];
+        $menu->items        = $menu_data['menu_items'];
+        $menu->ul_classes   = $ul_classes;
+        $menu->ul_id        = $ul_id;
         $menu->show_submenu = $show_submenu;
 
         $menu->menuitem_partial = $menuitem_partial;
-        $menu->depth = $depth;
+        $menu->depth            = $depth;
 
         $menu->data = $custom_data;
 
-        $menu = apply_filters( "dustpress/menu/data", $menu );
+        $menu = apply_filters(
+            'dustpress/menu/data',
+            $menu
+        );
 
-        $output = dustpress()->render( [
-            'partial' => $menu_partial,
-            'data' => $menu,
-            'type' => 'html',
-            'echo' => false,
-        ]);
+        $output = dustpress()->render(
+            [
+                'partial' => $menu_partial,
+                'data'    => $menu,
+                'type'    => 'html',
+                'echo'    => false,
+            ]
+        );
 
-        return apply_filters( "dustpress/menu/output", $output );
+        return apply_filters(
+            'dustpress/menu/output',
+            $output
+        );
     }
 
     /*
@@ -124,19 +132,19 @@ class Menu extends Helper {
     /**
      * Returns all menu items arranged in a recursive array form that's
      * easy to use with Dust templates. Menu_name parameter is mandatory.
-     * Parent is used to get only submenu for certaing parent post ID.
+     * Parent is used to get only submenu for certain parent post ID.
      * Override is used to make some other post than the current 'active'.
      *
-     * @type        function
-     * @date        16/6/2015
-     * @since       0.0.2
+     * @date  2015-06-16
+     *
+     * @since 0.0.2
      *
      * @param string  $menu_name
      * @param integer $parent
      * @param integer $override
      * @param boolean $menu_id_given
      *
-     * @return      array of menu object and menu items in a recursive array
+     * @return array of menu object and menu items in a recursive array
      */
     public static function get_menu_data( $menu_name, $parent = 0, $override = null, $menu_id_given = false ) {
 
@@ -211,15 +219,15 @@ class Menu extends Helper {
      * Recursive function that builds a menu downwards from an item. Calls
      * itself recursively in case there is a submenu under current item.
      *
-     * @type        function
-     * @date        16/6/2015
-     * @since       0.0.2
+     * @date  2015-06-16
+     * @since 0.0.2
      *
-     * @param  array    $menu_items Queried menu items.
-     * @param  integer  $parent
-     * @param  string   $type
-     * @param  integer  $override   An id to match for current queried object.
-     * @return [type]
+     * @param array   $menu_items Queried menu items.
+     * @param integer $parent
+     * @param string  $type
+     * @param integer $override   An id to match for current queried object.
+     *
+     * @return array
      */
     private static function build_menu( $menu_items, $parent = 0, $type = 'page', $override = null ) {
         $temp_items = [];
@@ -258,15 +266,23 @@ class Menu extends Helper {
 
                     if ( self::is_current( $item, $override ) ) {
                         $item->classes[] = 'current-menu-item';
-                        $temp_items[] = 'active';
+                        $temp_items[]    = 'active';
                     }
 
                     if ( is_array( $item->classes ) ) {
                         $item->classes = array_filter( $item->classes );
                     }
 
-                    $item->classes = (array) apply_filters( "dustpress/menu/item/classes", $item->classes, $item );
-                    $item = apply_filters( "dustpress/menu/item", $item );
+                    $item->classes = (array) apply_filters(
+                        'dustpress/menu/item/classes',
+                        $item->classes,
+                        $item
+                    );
+
+                    $item = apply_filters(
+                        'dustpress/menu/item',
+                        $item
+                    );
 
                     $item->classes[] = 'menu-item';
                     $item->classes[] = 'menu-item-' . $item->object_id;
@@ -275,14 +291,16 @@ class Menu extends Helper {
                 }
             }
         }
+
         return $temp_items;
     }
 
     /**
      * Checks whether the current menu item is the queried object.
      *
-     * @param  object  $item       A menu item.
-     * @param  integer $override   An id to match with the current object.
+     * @param object  $item     A menu item.
+     * @param integer $override An id to match with the current object.
+     *
      * @return boolean
      */
     private static function is_current( $item, $override ) {
@@ -310,12 +328,12 @@ class Menu extends Helper {
      *
      * @return bool|array
      */
-    protected static function get_cached_menu_items( ?int $menu_id ) {
+    protected static function get_cached_menu_items( $menu_id ) {
         if ( static::disable_cache() ) {
             return false;
         }
-        $cache = wp_cache_get( static::CACHE_KEY_PREFIX . $menu_id );
-        return $cache;
+
+        return wp_cache_get( static::CACHE_KEY_PREFIX . $menu_id );
     }
 
     /**
@@ -326,13 +344,15 @@ class Menu extends Helper {
      *
      * @return bool
      */
-    protected static function set_cached_menu_items( ?int $menu_id, ?array $menu_items = [] ) {
+    protected static function set_cached_menu_items( $menu_id, $menu_items = [] ) {
         if ( static::disable_cache() ) {
             return false;
         }
 
-        // Define the cache expiration time in secods.
-        $expire = defined( 'DUSTPRESS_MENU_HELPER_CACHE_EXPIRE' ) ? DUSTPRESS_MENU_HELPER_CACHE_EXPIRE : 15 * MINUTE_IN_SECONDS;
+        // Define the cache expiration time in seconds.
+        $expire = defined( 'DUSTPRESS_MENU_HELPER_CACHE_EXPIRE' )
+            ? DUSTPRESS_MENU_HELPER_CACHE_EXPIRE
+            : 15 * MINUTE_IN_SECONDS;
 
         return wp_cache_set( static::CACHE_KEY_PREFIX . $menu_id, $menu_items, null, $expire );
     }
@@ -358,8 +378,7 @@ class Menu extends Helper {
      * @return bool
      */
     protected static function disable_cache() {
-        $disable = defined( 'DUSTPRESS_MENU_HELPER_CACHE_DISABLE' ) && DUSTPRESS_MENU_HELPER_CACHE_DISABLE === true;
-        return $disable;
+        return defined( 'DUSTPRESS_MENU_HELPER_CACHE_DISABLE' ) && DUSTPRESS_MENU_HELPER_CACHE_DISABLE === true;
     }
 }
 

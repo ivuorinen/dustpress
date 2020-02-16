@@ -11,82 +11,85 @@ Version: 1.27.1
 
 final class DustPress {
 
-	// Singleton DustPress instance
-	private static $instance;
+    // Singleton DustPress instance
+    private static $instance;
 
-	// Instance of DustPHP
-	public $dust;
+    // Instance of DustPHP
+    public $dust;
 
-	// Main model
-	private $model;
+    // Main model
+    private $model;
 
-	// This is where the data will be stored
-	private $data;
+    // This is where the data will be stored
+    private $data;
 
-	// DustPress settings
-	private $settings;
+    // DustPress settings
+    private $settings;
 
-	// Is DustPress disabled?
-	public $disabled;
+    // Is DustPress disabled?
+    public $disabled;
 
-	// Paths for locating files
-	private $paths;
+    // Paths for locating files
+    private $paths;
 
-	// Paths for template files
-	private $templates;
+    // Paths for template files
+    private $templates;
 
     // Are we on an activation page
     private $activate;
 
-	// Registered custom ajax functions
-	private $ajax_functions;
+    // Registered custom ajax functions
+    private $ajax_functions;
 
-	// Custom routes
-	private $custom_routes = [];
+    // Custom routes
+    private $custom_routes = [];
 
-	private $request_data;
+    private $request_data;
 
-	private $autoload_paths;
+    private $autoload_paths;
 
-	public static function instance() {
-		if ( ! isset( self::$instance ) ) {
+    public static function instance() {
+        if ( ! isset( self::$instance ) ) {
             self::$instance = new DustPress();
         }
+
         return self::$instance;
-	}
+    }
 
-	/**
-	*  Constructor for DustPress core class.
-	*
-	*  @type	function
-	*  @date	10/8/2015
-	*  @since	0.2.0
-	*/
+    /**
+     *  Constructor for DustPress core class.
+     *
+     * @type    function
+     * @date     10/8/2015
+     * @since    0.2.0
+     */
+    protected function __construct() {
+        // Autoload paths will be stored here so the filesystem has to be scanned only once.
+        $this->autoload_paths = [];
 
-	protected function __construct() {
-		// Autoload paths will be stored here so the filesystem has to be scanned only once.
-		$this->autoload_paths = [];
+        $this->register_autoloaders();
 
-		$this->register_autoloaders();
+        // Create a DustPHP instance
+        $this->dust = new Dust\Dust();
 
-		// Create a DustPHP instance
-		$this->dust = new Dust\Dust();
+        // Dust template paths will be stored here so the filesystem has to be scanned only once.
+        $this->templates = [];
 
-		// Dust template paths will be stored here so the filesystem has to be scanned only once.
-		$this->templates = [];
-
-		$this->add_theme_paths();
-		$this->add_core_paths();
+        $this->add_theme_paths();
+        $this->add_core_paths();
 
         // Find and include Dust helpers from DustPress plugin
         $paths = [
             __DIR__ . '/helpers',
         ];
 
-        foreach( $paths as $path ) {
+        foreach ( $paths as $path ) {
             if ( is_readable( $path ) ) {
-                foreach( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $path, RecursiveDirectoryIterator::SKIP_DOTS ) ) as $file ) {
-                    if ( is_readable( $file ) && '.php' === substr( $file, -4, 4 ) ) {
+                foreach (
+                    new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $path,
+                        RecursiveDirectoryIterator::SKIP_DOTS ) ) as $file
+                ) {
+                    if ( is_readable( $file ) && '.php' === substr( $file, - 4, 4 ) ) {
                         require_once( $file );
                     }
                 }
@@ -1735,5 +1738,5 @@ final class DustPress {
 
 // Global function that returns the DustPress singleton
 function dustpress() {
-	return DustPress::instance();
+    return DustPress::instance();
 }

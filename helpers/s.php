@@ -1,8 +1,8 @@
 <?php
+
 namespace DustPress;
 
-class S extends Helper
-{
+class S extends Helper {
     public function output() {
 		if ( isset( $this->params->s ) ) {
 			if ( isset( $this->params->td ) ) {
@@ -26,4 +26,4 @@ class S extends Helper
     }
 }
 
-$this->add_helper( "s", new S() );
+$this->add_helper( 's', new S() );

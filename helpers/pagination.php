@@ -33,19 +33,19 @@ class Pagination extends Helper {
 
         $params         = $this->params;
         $data           = (object) [];
-        $pages          = array();
+        $pages          = [];
         $neighbours     = isset( $params->neighbours ) ? (int) $params->neighbours : 3;
         $visible        = 1 + ( 2 * $neighbours );
         $hellip_start   = true;
         $hellip_end     = true;
-        $strings        = isset( $params->strings ) ? $params->strings    : [];
-        $cur_page       = isset( $params->page )    ? (int) $params->page : 1;
+        $strings        = isset( $params->strings ) ? $params->strings : [];
+        $cur_page       = isset( $params->page ) ? (int) $params->page : 1;
         $prev_page      = $cur_page - 1;
         $next_page      = $cur_page + 1;
         $per_page       = (int) $params->per_page;
         $items          = (int) $params->items;
-        $hash           = $params->hash     ? '#' . $params->hash : '';
-        $this->page_var = $params->page_var ? $params->page_var   : 'paged';
+        $hash           = $params->hash ? '#' . $params->hash : '';
+        $this->page_var = $params->page_var ? $params->page_var : 'paged';
 
         // Setup strings
         $defaults = [
@@ -177,7 +177,10 @@ class Pagination extends Helper {
         $data->prev_page     = $prev_page;
         $data->hash          = $hash;
         $data->page_var      = $this->page_var;
-        $data->page_link     = apply_filters( 'dustpress/pagination/page_link', $page_link );
+        $data->page_link     = apply_filters(
+            'dustpress/pagination/page_link',
+            $page_link
+        );
 
         $data->S        = (object) [];
         $data->S->prev  = $strings['previous'];
@@ -187,11 +190,9 @@ class Pagination extends Helper {
 
         $this->data = $data;
 
-        $this->data = $data;
-
         // Add this data to DustPress debuggers output.
         $debugger_class = __NAMESPACE__ . '\Debugger';
-        if ( \class_exists( $debugger_class ) && \method_exists( $debugger_class, 'set_debugger_data' )  ) {
+        if ( \class_exists( $debugger_class ) && \method_exists( $debugger_class, 'set_debugger_data' ) ) {
             $debugger_class::set_debugger_data( 'Pagination', $data );
         }
 

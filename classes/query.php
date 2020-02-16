@@ -15,23 +15,22 @@ use WP_Query;
  */
 class Query {
 
-	private static $post;
-	private static $posts;
-	private static $query;
+    private static $post;
+    private static $posts;
+    private static $query;
 
-	/**
-	 * This function will query single post and its meta.
-	 * The wanted meta keys should be in an array as strings.
-	 * A string 'all' returns all the meta keys and values in an associative array.
-	 * If 'single' is set to true then the functions returns only the first value of the specified meta_key.
-	 *
-	 * @type	function
-	 * @date	20/3/2015
-	 * @since	0.0.1
-	 *
-	 * @param	int $id
-	 * @param	array $args
-	 *
+    /**
+     * This function will query single post and its meta.
+     * The wanted meta keys should be in an array as strings.
+     * A string 'all' returns all the meta keys and values in an associative array.
+     * If 'single' is set to true then the functions returns only the first value of the specified meta_key.
+     *
+     * @date  2015-03-20
+     * @since 0.0.1
+     *
+     * @param int   $id   Post ID.
+     * @param array $args Query arguments.
+     *
      * @return array|object|null Type corresponding to output type on success or null on failure.
 	 */
 	public static function get_post( $id = null, $args = array() ) {
@@ -135,18 +134,21 @@ class Query {
         // Get fields with relational post data as a whole acf object
         if ( $current_recursion_level < $max_recursion_level ) {
 
-            // Let's avoid infinite loops by default by stopping recursion after one level. You may dig deeper in your view model.
-            $options['current_recursion_level'] = apply_filters( 'dustpress/query/current_recursion_level', ++$current_recursion_level );
+            // Let's avoid infinite loops by default by stopping recursion after one level.
+            // You may dig deeper in your view model.
+            $options['current_recursion_level'] = apply_filters(
+                'dustpress/query/current_recursion_level',
+                ++ $current_recursion_level
+            );
 
             if ( ! empty( $acfpost->fields ) && is_array( $acfpost->fields ) ) {
                 foreach ( $acfpost->fields as &$field ) {
                     $field = self::handle_field( $field, $options );
                 }
             }
-        }
-        elseif ( true == $whole_fields ) {
+        } elseif ( true === $whole_fields ) {
             if ( ! empty( $acfpost->fields ) && is_array( $acfpost->fields ) ) {
-                foreach( $acfpost->fields as $name => &$field ) {
+                foreach ( $acfpost->fields as $name => &$field ) {
                     $field = get_field_object( $name, $acfpost->ID, true );
                 }
             }
@@ -237,30 +239,30 @@ class Query {
 
         $options = array_merge( $defaults, $args );
 
-// FIXME -> WP function
+        // FIXME -> WP function
         extract( $options );
 
-		self::$query = new WP_Query( $options );
+        self::$query = new WP_Query( $options );
 
-		// Extend the basic post data with the permalink
-		// and the featured image id if it exists.
-		if (
-		    is_array( self::$query->posts ) &&
+        // Extend the basic post data with the permalink
+        // and the featured image id if it exists.
+        if (
+            is_array( self::$query->posts ) &&
             self::$query->query_vars['fields'] !== 'ids' &&
             count( self::$query->posts ) > 0
         ) {
-			foreach ( self::$query->posts as &$p ) {
+            foreach ( self::$query->posts as &$p ) {
                 $p->permalink = get_permalink( $p->ID );
                 $p->image_id  = get_post_thumbnail_id( $p->ID );
-			}
-		}
+            }
+        }
 
-		// Get meta for posts
-		if ( count( self::$query->posts ) ) {
-			self::get_meta_for_posts( self::$query->posts, $meta_keys, $single );
+        // Get meta for posts
+        if ( count( self::$query->posts ) ) {
+            self::get_meta_for_posts( self::$query->posts, $meta_keys, $single );
 
-			// Reset the global post data just in case
-			wp_reset_postdata();
+            // Reset the global post data just in case
+            wp_reset_postdata();
 
             // Return in the desired format.
 			return self::query_return_value_format( self::$query , $query_object, $no_found_rows );
@@ -283,11 +285,11 @@ class Query {
 	 */
 	public static function get_acf_posts( $args ) {
 
-		// Some redundancy, but we need these.
-		$defaults = self::get_wp_query_defaults();
+        // Some redundancy, but we need these.
+        $defaults = self::get_wp_query_defaults();
 
-		$defaults['max_recursion_level']     = 0;
-		$defaults['current_recursion_level'] = 0;
+        $defaults['max_recursion_level']     = 0;
+        $defaults['current_recursion_level'] = 0;
 
         $options = array_merge( $defaults, $args );
 
@@ -296,9 +298,9 @@ class Query {
         // Perform the basic query first
         self::get_posts( $options );
 
-		// Temporarily set 'query_object' to 'true' for self::get_posts.
+        // Temporarily set 'query_object' to 'true' for self::get_posts.
         // The original value is still stored in $query_object.
-		$args['query_object'] = true;
+        $args['query_object'] = true;
 
         self::get_posts( $args );
 
@@ -336,7 +338,7 @@ class Query {
                         $p->image = acf_get_attachment( $attachment_id );
                     }
                 }
-			}
+            }
 
 			// Return in the desired format.
             return self::query_return_value_format( self::$query, $query_object, $no_found_rows );
@@ -353,7 +355,7 @@ class Query {
      * @param boolean   $query_object  Do we want the whole query object?
      * @param boolean   $no_found_rows Was the query paginated?
      *
-     * @return \WP_Query|array
+     * @return \WP_Query|array|object
      */
     private static function query_return_value_format( $query, $query_object, $no_found_rows ) {
         // Maybe return the whole query object
@@ -369,9 +371,8 @@ class Query {
     /**
      * Wraps the WP_Query data into a clean object for DustPHP parsing.
      *
-     * @type	function
-     * @date	17/2/2017
-     * @since	1.5.7
+     * @date  2017-02-17
+     * @since 1.5.7
      *
      * @param object $query The WP_Query object.
      *
@@ -397,7 +398,11 @@ class Query {
         }
 
         // Return the data through possible custom filters.
-        return apply_filters( 'dustpress/query/object', $object, $query );
+        return apply_filters(
+            'dustpress/query/object',
+            $object,
+            $query
+        );
     }
 
 	/**

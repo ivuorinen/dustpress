@@ -12,15 +12,13 @@ class UserActivate extends \DustPress\Model {
     /**
      * Returns the state of the page and sets the right strings for printing.
      * States:
-     *     no-key                   No activation key is set. Normally outputs form for user to give the key.
-     *     site-active-mail         Site has been activated and mail sent to user.
-     *     account-active-mail      Account has been activated and mail sent to user.
-     *     account-active-no-mail   Account has been activated but no mail is sent. Normally outputs username and password.
-     *     error                    Error occurred during activation. Sets error message to print['error'].
+     *   no-key                 No activation key is set. Normally outputs form for user to give the key.
+     *   site-active-mail       Site has been activated and mail sent to user.
+     *   account-active-mail    Account has been activated and mail sent to user.
+     *   account-active-no-mail Account has been activated but no mail is sent. Normally outputs username and password.
+     *   error                  Error occurred during activation. Sets error message to print['error'].
      *
-     * @param   N /A
-     *
-     * @return  $state (string)    State of the view.
+     * @return string State of the view.
      */
     public function State() {
         $valid_error_codes = [ 'already_active', 'blog_taken' ];
@@ -150,7 +148,7 @@ class UserActivate extends \DustPress\Model {
      *  username - User's loginname
      *  password - Translated string of "Your chosen password".
      *
-     *  @return  $this->print (string) Messages for the view.
+     * @return string $this->print Messages for the view.
      */
     public function Print() {
         return $this->print;

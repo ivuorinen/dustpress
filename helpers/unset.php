@@ -1,4 +1,5 @@
 <?php
+
 namespace DustPress;
 
 class Unset_Helper extends Helper {
@@ -12,7 +13,6 @@ class Unset_Helper extends Helper {
         } else {
             return $this->chunk->write( 'DustPress unset helper error: No key specified.' );
         }
-
         // It also must be a string
         if ( ! is_string( $key ) ) {
             return $this->chunk->write( 'DustPress unset helper error: Key is not a string.' );
@@ -20,22 +20,24 @@ class Unset_Helper extends Helper {
 
         if ( is_array( $root->head->value ) ) {
             unset( $root->head->value[ $key ] );
-        }
-        else if ( is_object( $root->head->value ) ) {
+        } else if ( is_object( $root->head->value ) ) {
             unset( $root->head->value->{$key} );
         }
-        
+
         return $this->chunk;
     }
 
-    // Recursive function to find the root of the data tree
+    /**
+     * Recursive function to find the root of the data tree
+     *
+     * @param object $ctx Context.
+     *
+     * @return mixed
+     */
     private function find_root( $ctx ) {
-        if ( isset( $ctx->parent ) ) {
-            return $this->find_root( $ctx->parent );
-        }
-        else {
-            return $ctx;
-        }
+        return isset( $ctx->parent )
+            ? $this->find_root( $ctx->parent )
+            : $ctx;
     }
 }
 

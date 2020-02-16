@@ -1,7 +1,13 @@
 <?php
+
 namespace DustPress;
 
 class Get extends Helper {
+    /**
+     * Get object value by key
+     *
+     * @return mixed|string
+     */
     public function output() {
         if ( isset( $this->params->object ) ) {
             $object = $this->params->object;

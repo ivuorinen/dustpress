@@ -20,7 +20,20 @@
   ],
   "license": "GPL-3.0",
   "minimum-stability": "dev",
+  "prefer-stable": true,
   "autoload": {
     "files": ["dustpress.php"]
+  },
+  "require-dev": {
+    "automattic/vipwpcs": "^2.0",
+    "dealerdirect/phpcodesniffer-composer-installer": "^0.6.2",
+    "roave/security-advisories": "dev-master",
+    "squizlabs/php_codesniffer": "^3.0",
+    "wp-coding-standards/wpcs": "^2.2"
+  },
+  "config": {
+    "optimize-autoloader": true,
+    "preferred-install": "dist",
+    "sort-packages": true
   }
 }

@@ -1,7 +1,13 @@
 <?php
+
 namespace DustPress;
 
 class Content extends Helper {
+    /**
+     * Process param "data" through filter 'the_content'
+     *
+     * @return false|mixed|string|void
+     */
     public function output() {
         global $post;
 

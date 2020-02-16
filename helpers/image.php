@@ -19,15 +19,12 @@ class Image extends Helper {
      * @return string The HTML markup or an error message.
      */
     public function output() {
-
         // Store the parameters.
         $image_data = $this->get_image_data( $this->params );
 
         // If blog_id we are working on the network.
         if ( ! empty( $image_data['blog_id'] ) ) {
-
             switch_to_blog( (int) $image_data['blog_id'] );
-
             $image_output = $this->get_image_output( $image_data );
             restore_current_blog();
         }
@@ -41,14 +38,13 @@ class Image extends Helper {
     /**
      * Get image output.
      *
-     * @param  array $image_data Get image output.
+     * @param array $image_data Get image output.
      *
      * @return mixed Image output data, error or empty value on failure.
      */
     private function get_image_output( $image_data ) {
         // ID given
         if ( null !== $image_data['id'] ) {
-
             // SRC also given.
             if ( null !== $image_data['src'] ) {
                 if ( defined( 'WP_DEBUG' ) && WP_DEBUG === true ) {
@@ -153,7 +149,7 @@ class Image extends Helper {
      * Gets and formats the data from the parameters given
      * to the image helper tag.
      *
-     * @param  array $params     The array object.
+     * @param array $params The array object.
      *
      * @return array $image_data The formatted array.
      */
@@ -218,9 +214,9 @@ class Image extends Helper {
     /**
      * Get the custom HTML srcset markup with the given settings
      *
-     * @param  array $image_data The given srcset and sizes.
+     * @param array $image_data The given srcset and sizes.
      *
-     * @return string            The image markup.
+     * @return string The image markup.
      */
     private function get_image_markup( $image_data ) {
 
@@ -232,8 +228,10 @@ class Image extends Helper {
         } else { // Else get the images src from WP.
 
             // Get the image from WP.
-            $image_src_array = wp_get_attachment_image_src( $image_data['id'],
-            $image_data['size'] );
+            $image_src_array = wp_get_attachment_image_src(
+                $image_data['id'],
+                $image_data['size']
+            );
 
             // Construct the beginning markup of the image string if the image is found.
             if ( $image_src_array ) {
@@ -256,15 +254,15 @@ class Image extends Helper {
 
         // Set the class string.
         $image_class_string = ( isset( $image_data['attrs']['class'] )
-                                ? 'class="'. $image_data['attrs']['class'] .'"'
-                                : ''
-                            );
+            ? 'class="' . $image_data['attrs']['class'] . '"'
+            : ''
+        );
 
         // Set the alt string.
         $image_alt_string = ( isset( $image_data['attrs']['alt'] )
-                                ? 'alt="'. $image_data['attrs']['alt'] .'"'
-                                : ''
-                            );
+            ? 'alt="' . $image_data['attrs']['alt'] . '"'
+            : ''
+        );
 
         // Set the sizes attribute string.
         $sizes = $image_data['sizes'];
@@ -281,14 +279,14 @@ class Image extends Helper {
 
         // Concatenate the given sizes to a comma separated list
         // and construct the sizes string.
-        $image_sizes_string = 'sizes="' . implode( ', ', $sizes ) .'"';
+        $image_sizes_string = 'sizes="' . implode( ', ', $sizes ) . '"';
 
         // Either use the srcset array that is given
         // or fetch the urls and widths using the WP sizes.
         $srcset_array = ( isset( $image_data['srcset'] )
-                            ? $image_data['srcset']
-                            : $this->get_wp_image_sizes_array( $image_data )
-                        );
+            ? $image_data['srcset']
+            : $this->get_wp_image_sizes_array( $image_data )
+        );
 
         // Check that the srcset is given as an array.
         if ( ! is_array( $srcset_array ) ) {
@@ -301,7 +299,7 @@ class Image extends Helper {
         }
 
         // Construct the srcset string.
-        $image_srcset_string = 'srcset="' . implode( ', ', $srcset_array ) .'"';
+        $image_srcset_string = 'srcset="' . implode( ', ', $srcset_array ) . '"';
 
         // Close the img tag.
         $image_close_string = '>';
@@ -314,16 +312,18 @@ class Image extends Helper {
                 $image_sizes_string .
                 $image_close_string;
 
-        $html = apply_filters( "dustpress/image/markup", $html );
-
-        return $html;
+        return apply_filters(
+            'dustpress/image/markup',
+            $html
+        );
     }
 
     /**
      * Get all the registered image sizes along with their dimensions
      *
      * @global array $_wp_additional_image_sizes
-     * @param int $id The image ID.
+     *
+     * @param array  $image_data Image Data.
      *
      * @return array $image_sizes The image sizes
      */
@@ -332,25 +332,22 @@ class Image extends Helper {
         // The registered image sizes.
         global $_wp_additional_image_sizes;
 
-        // The default wordpress image sizes. Exclude the thumbnail size.
-        $default_image_sizes = array( 'medium', 'medium_large', 'large' );
+        // The default WordPress image sizes. Exclude the thumbnail size.
+        $default_image_sizes = [ 'medium', 'medium_large', 'large' ];
 
         // Loop through the sizes and get the corresponding options from the db.
         foreach ( $default_image_sizes as $size ) {
-
-            $image_sizes[ $size ]['width'] = intval( get_option( "{$size}_size_w" ) );
+            $image_sizes[ $size ]['width']  = intval( get_option( "{$size}_size_w" ) );
             $image_sizes[ $size ]['height'] = intval( get_option( "{$size}_size_h" ) );
-            $image_sizes[ $size ]['crop'] = ( get_option( "{$size}_crop" )
-                                                ? get_option( "{$size}_crop" )
-                                                : false
-                                            );
+            $image_sizes[ $size ]['crop']   = ( get_option( "{$size}_crop" )
+                ? get_option( "{$size}_crop" )
+                : false
+            );
         }
 
         // Add custom sizes to the array.
         if ( isset( $_wp_additional_image_sizes ) && count( $_wp_additional_image_sizes ) ) {
-
             $image_sizes = array_merge( $image_sizes, $_wp_additional_image_sizes );
-
         }
 
         // The final array in which we have the properly formatted urls and widths.
@@ -358,16 +355,15 @@ class Image extends Helper {
 
         // Loop through the sizes in the array and get the urls and widths from WP.
         foreach ( $image_sizes as $size => $size_options ) {
-
-            $url   = wp_get_attachment_image_src( $image_data['id'], $size )[0];
-            $width = $size_options['width'];
-            $entry = $url . ' ' . $width . 'w';
+            $url            = wp_get_attachment_image_src( $image_data['id'], $size )[0];
+            $width          = $size_options['width'];
+            $entry          = $url . ' ' . $width . 'w';
             $srcset_array[] = $entry;
-
         }
 
         return $srcset_array;
     }
 }
+
 // Add the helper.
 $this->add_helper( 'image', new Image() );

@@ -1,8 +1,8 @@
 <?php
+
 namespace DustPress;
 
-class Sep extends Helper
-{
+class Sep extends Helper {
     public function init() {
         if ( isset( $this->params->end ) ) {
             $end = $this->params->end;
