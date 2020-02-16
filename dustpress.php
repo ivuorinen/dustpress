@@ -405,7 +405,7 @@ final class DustPress {
         if ( is_attachment() ) {
             $mime_type = get_post_mime_type( get_the_ID() );
 
-            $hiearchy['is_attachment'] = [
+            $hierarchy['is_attachment'] = [
                 function () use ( $mime_type ) {
                     return preg_match( '/^image/', $mime_type ) && class_exists( 'Image' )
                         ? 'Image'
