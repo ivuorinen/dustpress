@@ -172,13 +172,13 @@ class Menu extends Helper {
         if ( $menu_items ) {
             $built_menu_items = self::build_menu( $menu_items, $parent_id, null, $override );
 
-            $active = array_keys( $built_menu_items, 'active' );
+            $active = array_keys( $built_menu_items, 'active', true );
 
             foreach ( $active as $index ) {
                 unset( $built_menu_items[ $index ] );
             }
 
-            if ( 0 === array_search( 'active', $built_menu_items ) ) {
+            if ( 0 === array_search( 'active', $built_menu_items, true ) ) {
                 unset( $built_menu_items[0] );
             }
 
@@ -257,18 +257,22 @@ class Menu extends Helper {
                     if ( is_array( $item->sub_menu ) && count( $item->sub_menu ) > 0 ) {
                         $item->classes[] = 'menu-item-has-children';
                     }
-                    if ( is_array( $item->sub_menu ) && $index = array_search( 'active', $item->sub_menu ) ) {
+
+                    if (
+                        is_array( $item->sub_menu ) &&
+                        $index = array_search( 'active', $item->sub_menu, true )
+                    ) {
                         $item->classes[] = 'current-menu-parent';
                         unset( $item->sub_menu[ $index ] );
                         $temp_items[] = 'active';
                     }
-                    if ( is_array( $item->sub_menu ) && 0 === array_search( 'active', $item->sub_menu ) ) {
+                    if ( is_array( $item->sub_menu ) && 0 === array_search( 'active', $item->sub_menu, true ) ) {
                         $item->classes[] = 'current-menu-parent';
                         unset( $item->sub_menu[0] );
                         $temp_items[] = 'active';
                     }
 
-                    if ( in_array( $item->object_id, get_post_ancestors( get_the_ID() ) ) ) {
+                    if ( in_array( $item->object_id, get_post_ancestors( get_the_ID() ), true ) ) {
                         $item->classes[] = 'current-menu-parent';
                     }
 

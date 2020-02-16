@@ -23,7 +23,8 @@ class Contains extends \Dust\Helper\Comparison {
      */
     public function isValid( $key, $value ) {
         $haystack = (array) $key;
-        return in_array( $value, $haystack );
+
+        return in_array( $value, $haystack, true );
     }
 }
 

@@ -727,7 +727,7 @@ class Model {
         }
 
         // Set the data hash key to the index array of this model function
-        if ( ! in_array( $this->hash, $hash_index ) ) {
+        if ( ! in_array( $this->hash, $hash_index, true ) ) {
             $hash_index[] = $this->hash;
         }
 
