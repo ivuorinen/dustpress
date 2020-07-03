@@ -9,35 +9,65 @@
 
 namespace DustPress;
 
-use get_class;
-
 /**
  * The base class for template models.
  */
 class Model {
 
-    // The data
+    /**
+     * The Data
+     *
+     * @var array
+     */
     public $data;
 
-    // Class name
+    /**
+     * Class name
+     *
+     * @var string
+     */
     protected $class_name;
 
-    // Arguments of this instance
+    /**
+     * Arguments of this instance
+     *
+     * @var array
+     */
     private $args = [];
 
-    // Instances of all submodels initiated from this class
+    /**
+     * Instances of all submodels initiated from this class
+     *
+     * @var object
+     */
     private $submodels;
 
-    // Possible parent model
+    /**
+     * Possible parent model
+     *
+     * @var mixed|null
+     */
     private $parent;
 
-    // Possible wanted template
+    /**
+     * Possible wanted template
+     *
+     * @var mixed
+     */
     private $template;
 
-    // Temporary hash key
+    /**
+     * Temporary hash key
+     *
+     * @var string
+     */
     private $hash;
 
-    // Is execution terminated
+    /**
+     * Is execution terminated
+     *
+     * @var boolean
+     */
     private $terminated;
 
     // Called submodels
@@ -46,8 +76,12 @@ class Model {
     // Methods that are allowed to run externally
     protected $api;
 
-    // The TTL for model cache
-    protected $ttl;
+    /**
+     * The TTL for model cache
+     *
+     * @var array
+     */
+    protected $ttl = [];
 
     /**
      * Constructor for DustPress model class.
@@ -55,8 +89,8 @@ class Model {
      * @date   2015-08-10
      * @since  0.2.0
      *
-     * @param array $args   Arguments.
-     * @param mixed $parent Parent model.
+     * @param array $args   Model arguments.
+     * @param mixed $parent Set model parent.
      */
     public function __construct( $args = [], $parent = null ) {
         $this->fix_deprecated();
@@ -71,11 +105,10 @@ class Model {
     }
 
     /**
-     * Get model's arguments
+     * Get model arguments
      *
      * @date  2016-06-03
      * @since 0.4.0
-     *
      * @return array
      */
     public function get_args() {
@@ -88,7 +121,7 @@ class Model {
      * @date  2018-01-26
      * @since 1.11.0
      *
-     * @param mixed $args Arguments.
+     * @param array $args Arguments for a model.
      *
      * @return void
      */
@@ -101,15 +134,13 @@ class Model {
      *
      * @date  2016-06-03
      * @since 0.4.0
-     *
-     * @return mixed
      */
     public function get_data() {
         return $this->data;
     }
 
     /**
-     * Get the instance of an instantiated submodel.
+     * Get the instance of an instantiated submodel
      *
      * @date  2016-06-03
      * @since 0.4.0
@@ -138,9 +169,10 @@ class Model {
      * Get the ancestor of this model.
      *
      * @date  2016-06-03
+     *
      * @since 0.4.0
      *
-     * @param Model|null $model The model you want ancestor of.
+     * @param null|\DustPress\Model $model DustPress Model.
      *
      * @return \Dustpress\Model
      */
@@ -172,14 +204,14 @@ class Model {
     /**
      * This function gets the data from models and binds it to the global data structure.
      *
-     * @date  2015-10-15
-     * @since 0.2.0
+     * @date   2015-10-15
+     * @since  0.2.0
      *
-     * @param array $functions
-     * @param bool  $tidy
+     * @param array|null $functions Functions to bind.
+     * @param bool       $tidy      Tidy and return the tidied data.
      *
      * @return mixed
-     * @throws \ReflectionException
+     * @throws \ReflectionException If class does not have method, throw exception.
      */
     public function fetch_data( $functions = null, $tidy = false ) {
         $this->class_name = get_class( $this );
@@ -235,39 +267,35 @@ class Model {
                         $private_methods[] = $method_item;
                         continue;
                     }
+
                     // If the method has parameters, it should be run manually
                     if ( $reflection->getNumberOfParameters() > 0 ) {
                         unset( $class_methods[ $index ] );
-                        continue;
+                    } else {
+                        $class_methods[ $index ] = [ $class, $method_item ];
                     }
-                    $class_methods[ $index ] = [ $class, $method_item ];
+
                     continue;
                 }
 
-                if ( $reflection->isPublic() ) {
-                    // If the method has parameters, it should be run manually
-                    if ( $reflection->getNumberOfParameters() > 0 ) {
-                        unset( $class_methods[ $index ] );
-                        continue;
-                    }
-                    $class_methods[ $index ] = [ $class, $method_item ];
+                if ( ! $reflection->isPublic() ) {
+                    unset( $class_methods[ $index ] );
                     continue;
+                }
+
+                // If the method has parameters, it should be run manually
+                if ( $reflection->getNumberOfParameters() > 0 ) {
+                    unset( $class_methods[ $index ] );
+                } else {
+                    $class_methods[ $index ] = [ $class, $method_item ];
                 }
                 unset( $class_methods[ $index ] );
             }
         }
 
         // Add some filters
-        $methods         = apply_filters(
-            'dustpress/methods',
-            $methods,
-            $this->class_name
-        );
-        $private_methods = apply_filters(
-            'dustpress/private_methods',
-            $private_methods,
-            $this->class_name
-        );
+        $methods         = apply_filters( 'dustpress/methods', $methods, $this->class_name );
+        $private_methods = apply_filters( 'dustpress/private_methods', $private_methods, $this->class_name );
 
         // If we want tidy output, init variable for that
         if ( $tidy ) {
@@ -279,32 +307,34 @@ class Model {
         // Loop through all public methods and run the ones we wanted to deliver the data to the views.
         foreach ( $methods as $class => $class_methods ) {
             foreach ( $class_methods as $name => $m ) {
-                if ( is_array( $m ) && isset( $m[1] ) && is_string( $m[1] ) ) {
-                    if ( $m[1] === '__construct' ) {
-                        continue;
-                    }
+                $perf_key = $this->perf_key( $m );
+                dustpress()->start_performance( $perf_key );
 
-                    $method = str_replace( 'bind_', '', $m[1] );
+                if ( is_array( $m ) ) {
+                    if ( isset( $m[1] ) && is_string( $m[1] ) ) {
+                        if ( $m[1] === '__construct' ) {
+                            continue;
+                        }
 
-                    if ( ! isset( $this->data[ $this->class_name ] ) ) {
-                        $this->data[ $this->class_name ] = (object) [];
-                    }
+                        $method = str_replace( 'bind_', '', $m[1] );
+
+                        if ( ! isset( $this->data[ $this->class_name ] ) ) {
+                            $this->data[ $this->class_name ] = (object) [];
+                        }
 
                     $data = $this->run_function( $m[1], $class );
 
-                    if ( $tidy ) {
-                        $tidy_data->{$m[1]} = $data;
-                        continue;
+                        if ( $tidy ) {
+                            $tidy_data->{$m[1]} = $data;
+                        } else {
+                            if ( ! is_null( $data ) ) {
+                                $content                         = (array) $this->data[ $this->class_name ];
+                                $content[ $method ]              = $data;
+                                $this->data[ $this->class_name ] = (object) $content;
+                            }
+                        }
                     }
-
-                    if ( ! is_null( $data ) ) {
-                        $content                         = (array) $this->data[ $this->class_name ];
-                        $content[ $method ]              = $data;
-                        $this->data[ $this->class_name ] = (object) $content;
-                    }
-                }
-
-                if ( is_callable( $m ) ) {
+                } elseif ( is_callable( $m ) ) {
                     if ( $m === '__construct' ) {
                         continue;
                     }
@@ -320,13 +350,16 @@ class Model {
                     if ( ! is_null( $data ) ) {
                         if ( $tidy ) {
                             $tidy_data->{$method} = $data;
-                            continue;
+                        } else {
+                            $this->data[ $this->class_name ]->{$method} = $data;
                         }
                         $this->data[ $this->class_name ]->{$method} = $data;
                     }
                 }
 
-                if ( $this->terminated === true ) {
+                dustpress()->save_performance( $perf_key );
+
+                if ( $this->terminated ) {
                     break 2;
                 }
             }
@@ -342,10 +375,12 @@ class Model {
                 if ( is_null( $data ) ) {
                     continue;
                 }
+
                 if ( $tidy ) {
                     $tidy_data->{$method} = $data;
                     continue;
                 }
+
                 $content                         = (array) $this->data[ $this->class_name ];
                 $content[ $method ]              = $data;
                 $this->data[ $this->class_name ] = (object) $content;
@@ -386,14 +421,14 @@ class Model {
      * This function returns all public methods from current class and it parents up to
      * but not including Model.
      *
-     * @date  2015-03-19
-     * @since 0.0.1
+     * @date   2015-03-19
+     * @since  0.0.1
      *
-     * @param string $class_name Class name.
-     * @param array  $methods    Array of method names.
+     * @param string $class_name Class name we want methods from.
+     * @param array  $methods    If we already have methods defined.
      *
-     * @return array
-     * @throws \ReflectionException
+     * @return array Class Methods.
+     * @throws \ReflectionException If class can't be reflected.
      */
     private function get_class_methods( $class_name, $methods = [] ) {
         $rc   = new \ReflectionClass( $class_name );
@@ -412,10 +447,10 @@ class Model {
             }
         }
 
-        $parent = get_parent_class( $class_name );
+        $class_parent = get_parent_class( $class_name );
 
-        if ( ! empty( $parent ) && 'DustPress\Model' !== $parent ) {
-            $methods = $this->get_class_methods( $parent, $methods );
+        if ( ! empty( $class_parent ) && 'DustPress\Model' !== $class_parent ) {
+            $methods = $this->get_class_methods( $class_parent, $methods );
         }
 
         return $methods;
@@ -427,11 +462,11 @@ class Model {
      * @date  2015-03-17
      * @since 0.0.1
      *
-     * @param string     $name
-     * @param array|null $args
-     * @param bool       $cache_sub
+     * @param string $name      Submodel name.
+     * @param null   $args      Arguments to pass to the submodel.
+     * @param bool   $cache_sub Cache Submodel results.
      *
-     * @throws \Exception 'DustPress error: bind_sub was called with invalid class name: '.
+     * @throws \Exception If provided submodel name is not a string.
      */
     public function bind_sub( $name, $args = null, $cache_sub = true ) {
         if ( $this->terminated === true ) {
@@ -441,36 +476,37 @@ class Model {
         $this->class_name = get_class( $this );
         if ( ! is_string( $name ) ) {
             throw new \Exception(
-                'DustPress error: bind_sub was called with invalid class name: ' .
-                print_r( $name, true )
+                sprintf(
+                    'DustPress error: bind_sub was called with invalid class name: %s',
+                    print_r( $name, true )
+                )
             );
         }
+        $model = new $name( $args, $this );
+
+        $data       = $model->fetch_data();
+        $class_name = $model->class_name;
 
         $model = new $name( $args, $this );
 
         // If the submodel is not on the root level, set it under the current submodel.
         if ( $this->parent ) {
-            $data       = $model->fetch_data();
-            $class_name = $model->class_name;
-
             if ( isset( $this->data[ $this->class_name ]->{$class_name} ) ) {
-                $this->data[ $this->class_name ]->{$class_name} = array_merge(
+                $data = array_merge(
                     (array) $this->data[ $this->class_name ]->{$class_name},
                     (array) $data
                 );
-            } else {
-                $this->data[ $this->class_name ]->{$class_name} = $data;
             }
+            $this->data[ $this->class_name ]->{$class_name} = $data;
         } // Set submodel under the main model.
         else {
-            $data       = $model->fetch_data();
-            $class_name = $model->class_name;
-
             if ( isset( $this->data[ $class_name ] ) ) {
-                $this->data[ $class_name ] = array_merge( (array) $this->data[ $class_name ], (array) $data );
-            } else {
-                $this->data[ $class_name ] = $data;
+                $data = array_merge(
+                    (array) $this->data[ $class_name ],
+                    (array) $data
+                );
             }
+            $this->data[ $class_name ] = $data;
         }
 
         if ( ! is_object( $this->submodels ) ) {
@@ -478,7 +514,6 @@ class Model {
         }
 
         $this->submodels->{$name} = $model;
-
 
         // Store called submodels for caching purposes.
         if ( $cache_sub ) {
@@ -491,7 +526,7 @@ class Model {
             ];
         }
 
-        if ( $model->terminated === true ) {
+        if ( $model->terminated ) {
             $this->terminate();
         }
     }
@@ -503,15 +538,13 @@ class Model {
      * @date  2015-03-17
      * @since 0.0.1
      *
-     * @param mixed  $data
-     * @param string $key
-     * @param string $model
-     *
-     * @return boolean
+     * @param mixed  $data  Data to bind to the model key.
+     * @param string $key   Key to bind to.
+     * @param string $model Model to bind data to.
      */
     public function bind( $data, $key = null, $model = null ) {
         if ( ! $key ) {
-            die("DustPress error: You need to specify the key if you use bind(). Use return if you want to use the function name.");
+            die( 'DustPress error: You need to specify the key if you use bind(). Use return if you want to use the function name.' );
         }
 
         if ( ! isset( $this->class_name ) ) {
@@ -529,7 +562,7 @@ class Model {
             }
             $this->data[ $model ]->{$key} = $data;
 
-            return true;
+            return;
         }
 
         // Create a place to store the wanted data in the global data structure.
@@ -540,30 +573,21 @@ class Model {
         if ( $this->parent ) {
             $this->data[ $this->class_name ]->{$key} = $data;
 
-            return true;
+            return;
         }
 
-        if ( ! is_array( $data ) ) {
-            $this->data[ $this->class_name ]->{$key} = $data;
-
-            return true;
-        }
-
-        if ( isset( $this->data[ $this->class_name ]->{$key} ) ) {
-            $this->data[ $this->class_name ]->{$key} = array_merge(
+        if ( is_array( $data ) && isset( $this->data[ $this->class_name ]->{$key} ) ) {
+            $data = array_merge(
                 (array) $this->data[ $this->class_name ]->{$key},
                 $data
             );
-
-            return true;
         }
         $this->data[ $this->class_name ]->{$key} = $data;
-
-        return true;
     }
 
     /**
-     * This function returns the desired Dust template, if the developer has defined one instead of default.
+     * This function returns the desired Dust template.
+     * If the developer has defined one instead of default.
      * Otherwise return false.
      *
      * @date   2015-10-15
@@ -582,12 +606,10 @@ class Model {
     /**
      * This function lets the developer to set the template to be used to render a page.
      *
-     * @date  2015-10-15
-     * @since 0.2.0
+     * @date   2015-10-15
+     * @since  0.2.0
      *
      * @param string $template Template name.
-     *
-     * @return bool
      */
     public function set_template( $template ) {
         if ( ! $template ) {
@@ -596,29 +618,30 @@ class Model {
 
         $ancestor = $this->get_ancestor();
 
+        if ( ! $template ) {
+            return;
+        }
         if ( $this === $ancestor ) {
             $this->template = $template;
 
-            return true;
+            return;
         }
-
         $ancestor->set_template( $template );
-
-        return true;
     }
 
     /**
      * This function checks whether data exists in cache (if cache is enabled)
      * and returns the data or runs the function and returns its return data.
      *
-     * @date  2016-01-29
-     * @since 0.3.1
+     * @date   2016-01-29
+     * @since  0.3.1
      *
-     * @param string      $m     Method/function name.
-     * @param string|null $class Class name.
+     * @param string $m     Function name.
+     * @param null   $class Class name.
      *
      * @return mixed
-     * @throws \ReflectionException If the class or method does not exist.
+     * @throws \ReflectionException If selected class does not have function.
+     * @throws \Exception Running get_cached() might throw an exception.
      */
     private function run_function( $m, $class = null ) {
         $cached = $this->get_cached( $m );
@@ -633,7 +656,7 @@ class Model {
 
         $reflection = new \ReflectionMethod( $class, $m );
 
-        $data = $reflection->isStatic()
+        $result = $reflection->isStatic()
             ? call_user_func( $class . '::' . $m )
             : call_user_func( [ $this, $m ] );
 
@@ -642,12 +665,12 @@ class Model {
             $subs = $this->called_subs;
         }
 
-        $this->maybe_cache( $m, $data, $subs );
+        $this->maybe_cache( $m, $result, $subs );
 
         // Unset called submodels for this run
         $this->called_subs = null;
 
-        return $data;
+        return $result;
     }
 
     /**
@@ -656,19 +679,21 @@ class Model {
      * @date  2016-01-29
      * @since 0.3.1
      *
-     * @param string $m Method/function name.
+     * @param string $m Function name.
      *
-     * @return mixed|false
-     * @throws \Exception
+     * @return mixed|bool
+     * @throws \Exception Running bind_sub() might throw an exception.
      */
     private function get_cached( $m ) {
-
         if ( ! dustpress()->get_setting( 'cache' ) ) {
             return false;
         }
 
-        $args       = $this->get_args();
-        $this->hash = $this->generate_cache_key( $this->class_name, $args, $m );
+        $this->hash = $this->generate_cache_key(
+            $this->class_name,
+            $this->get_args(),
+            $m
+        );
 
         $cached = get_transient( $this->hash );
 
@@ -680,7 +705,11 @@ class Model {
         if ( isset( $cached->subs ) && is_array( $cached->subs ) ) {
             foreach ( $cached->subs as $sub_data ) {
                 // Run submodel without caching it.
-                $this->bind_sub( $sub_data['class_name'], $sub_data['args'], false );
+                $this->bind_sub(
+                    $sub_data['class_name'],
+                    $sub_data['args'],
+                    false
+                );
             }
         }
 
@@ -694,12 +723,11 @@ class Model {
      * @date  2016-01-29
      * @since 0.3.1
      *
-     * @param string $m    Method/function name.
+     * @param string $m    Function name.
      * @param mixed  $data Data to cache.
-     * @param array  $subs Submodels to cache.
+     * @param array  $subs Submodels.
      */
     private function maybe_cache( $m, $data, $subs ) {
-
         // Check whether cache is enabled and model has ttl-settings.
         if ( ! dustpress()->get_setting( 'cache' ) || ! $this->is_cacheable_function( $m ) ) {
             return;
@@ -738,24 +766,13 @@ class Model {
     /**
      * Checks whether the function is to be cached.
      *
-     * @param string $m Method/function name.
+     * @param string $m Function name.
      *
-     * @return bool
+     * @return boolean
      */
     private function is_cacheable_function( $m ) {
-        // No caching set
-        if ( ! empty( $this->ttl ) && ! is_array( $this->ttl ) ) {
-            return false;
-        }
-        if ( ! empty( $this->ttl ) && is_array( $this->ttl ) ) {
-            foreach ( $this->ttl as $key => $val ) {
-                if ( $m === $key ) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
+        // TTL is not empty, it is an array and our method name is one of the keys.
+        return ! empty( $this->ttl ) && is_array( $this->ttl ) && array_key_exists( $m, $this->ttl );
     }
 
     /**
@@ -765,10 +782,10 @@ class Model {
      * @date  2015-12-17
      * @since 0.3.0
      *
-     * @param string $function Function name.
+     * @param string $function Function name to check.
      *
-     * @return bool
-     * @throws \ReflectionException
+     * @return boolean Is function allowed to be run.
+     * @throws \ReflectionException If function can't be found, throw an exception.
      */
     private function is_function_allowed( $function ) {
         if ( ! defined( 'DOING_AJAX' ) ) {
@@ -783,16 +800,14 @@ class Model {
     /**
      * This functions creates a cache key hash from parameters.
      *
-     * @date  2015-12-17
-     * @since 0.3.0
-     *
-     * @return string Cache key
+     * @date   2015-12-17
+     * @since  0.3.0
+     * @return string Cache key from serialized and hashed arguments.
      */
     private function generate_cache_key() {
-        $args = func_get_args();
         $seed = '';
 
-        foreach ( $args as $arg ) {
+        foreach ( func_get_args() as $arg ) {
             $seed .= serialize( $arg );
         }
 
@@ -808,19 +823,17 @@ class Model {
      * @date  2015-12-17
      * @since 0.3.0
      *
-     * @param string $function Function name.
+     * @param string $function Wanted function name.
      *
      * @return mixed
-     * @throws \ReflectionException If the class or method does not exist.
+     * @throws \ReflectionException If restricted function does not exist.
      */
     public function run_restricted( $function ) {
         if ( $this->is_function_allowed( $function ) ) {
             return $this->run_function( $function );
         }
 
-        return (object) [
-            'error' => 'Wanted function does not exist in the allowed functions list.',
-        ];
+        return (object) [ 'error' => 'Wanted function does not exist in the allowed functions list.' ];
     }
 
     /**
@@ -830,8 +843,6 @@ class Model {
      * @since 1.2.0
      *
      * @param string $name New name for the model.
-     *
-     * @return mixed
      */
     protected function rename_model( $name ) {
         $original = $this->class_name;
@@ -845,7 +856,8 @@ class Model {
         if ( isset( $this->data[ $original ] ) ) {
             $this->data[ $name ] = $this->data[ $original ];
             unset( $this->data[ $original ] );
-        } elseif ( ! isset( $this->data[ $name ] ) ) {
+        }
+        if ( ! isset( $this->data[ $name ] ) ) {
             $this->data[ $name ] = (object) [];
         }
     }
@@ -853,25 +865,17 @@ class Model {
     /**
      * A recursive array search.
      *
-     * @param mixed   $needle
-     * @param array   $haystack
-     * @param boolean $strict
+     * @param mixed   $needle   Needle we are looking for.
+     * @param array   $haystack Haystack we are looking from.
+     * @param boolean $strict   Should we be strict about it.
      *
      * @return boolean
      */
     protected function in_array_r( $needle, $haystack, $strict = true ) {
         foreach ( $haystack as $item ) {
-            if (
-                (
-                $strict
-                    ? $item === $needle
-                    : $item == $needle
-                ) ||
-                (
-                    is_array( $item ) &&
-                    $this->in_array_r( $needle, $item, $strict )
-                )
-            ) {
+            $needle_match = ( $strict ? $item === $needle : $item == $needle );
+            $array_match  = is_array( $item ) && $this->in_array_r( $needle, $item, $strict );
+            if ( $needle_match || $array_match ) {
                 return true;
             }
         }
@@ -879,11 +883,31 @@ class Model {
         return false;
     }
 
+    /**
+     * Set Model terminated.
+     */
     public function terminate() {
         $this->terminated = true;
     }
 
+    /**
+     * Returns terminated methods.
+     *
+     * @return mixed
+     */
     public function get_terminated() {
         return $this->terminated;
+    }
+
+    /**
+     * Generate performance tracking key.
+     *
+     * @param string $key    Performance key.
+     * @param string $prefix Prefix for performance key.
+     *
+     * @return string
+     */
+    private function perf_key( $key = '', $prefix = 'Models.%s' ) {
+        return sprintf( $prefix, wp_json_encode( $key ) );
     }
 }

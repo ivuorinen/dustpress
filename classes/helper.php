@@ -1,40 +1,48 @@
 <?php
+/**
+ * This file contains DustPress Helper class.
+ */
 
 namespace DustPress;
 
+/**
+ * Class Helper
+ *
+ * @package DustPress
+ */
 class Helper {
     /**
-     * Dust Chunk
+     * Chunk object.
      *
      * @var \Dust\Evaluate\Chunk
      */
     protected $chunk;
     /**
-     * Dust Context
+     * Context object.
      *
      * @var \Dust\Evaluate\Context
      */
     protected $context;
     /**
-     * Dust Bodies
+     * Bodies to evaluate.
      *
      * @var \Dust\Evaluate\Bodies
      */
     protected $bodies;
     /**
-     * Dust Parameters
+     * Parameters.
      *
      * @var \Dust\Evaluate\Parameters
      */
     protected $params;
 
     /**
-     * Helper base class invoking method
+     * Invoice Helper
      *
-     * @param \Dust\Evaluate\Chunk      $chunk   Dust Chunk.
-     * @param \Dust\Evaluate\Context    $context Dust Context.
-     * @param \Dust\Evaluate\Bodies     $bodies  Dust Bodies.
-     * @param \Dust\Evaluate\Parameters $params  Dust Parameters.
+     * @param \Dust\Evaluate\Chunk      $chunk   Chunk object.
+     * @param \Dust\Evaluate\Context    $context Context object.
+     * @param \Dust\Evaluate\Bodies     $bodies  Bodies to evaluate.
+     * @param \Dust\Evaluate\Parameters $params  Parameters object.
      *
      * @return \Dust\Evaluate\Chunk|void
      */
@@ -44,6 +52,7 @@ class Helper {
         \Dust\Evaluate\Bodies $bodies,
         \Dust\Evaluate\Parameters $params
     ) {
+
         $this->chunk   = $chunk;
         $this->context = $context;
         $this->bodies  = $bodies;
@@ -51,11 +60,13 @@ class Helper {
 
         if ( isset( $this->bodies->dummy ) && method_exists( $this, 'prerun' ) ) {
             $this->prerun();
+            return;
         }
-        if ( method_exists( $this, 'init' ) ) {
+
+        if ( ! isset( $this->bodies->dummy ) && method_exists( $this, 'init' ) ) {
             return $this->init();
         }
-        if ( method_exists( $this, 'output' ) ) {
+        if ( ! isset( $this->bodies->dummy ) && method_exists( $this, 'output' ) ) {
             return $this->chunk->write( $this->output() );
         }
     }

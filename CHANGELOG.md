@@ -4,6 +4,46 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.29.4] - 2020-07-02
+
+### Fixed
+- Fix data handling in DustPress.js GET requests.
+
+## [1.29.3] - 2020-06-16
+
+### Fixed
+- A bug within the Helper base class that caused the page to crash in some situations.
+
+## [1.29.2] - 2020-06-16
+
+### Changed
+- A lot of cleaning up of the code base.
+
+### Fixed
+- Moved saving template paths to the DustPHP instance earlier for compatibility reasons.
+
+## [1.29.1] - 2020-05-12
+
+### Fixed
+- A bug where `$GLOBALS['pagenow']` is empty.
+
+## [1.29.0] - 2020-03-09
+
+### Fixed
+- Remove the Dust dependency when rendering the data with another render function.
+
+## [1.28.1] - 2020-03-05
+
+### Added
+- More details for hook measurements.
+- Added $main for dustpress/data/after_render filter.
+- Automatic performance measuring for hooks.
+
+## [1.28.0] - 2020-02-20
+
+### Added
+- Automatic performance measuring.
+
 ## [1.27.1] - 2019-12-13
 
 ### Added

@@ -13,6 +13,12 @@
         "email": "ville.siltala@geniem.com",
         "homepage": "https://geniem.com/",
         "role": "Developer"
+    },
+    {
+        "name": "Ismo Vuorinen",
+        "email": "ismo.vuorinen@geniem.com",
+        "homepage": "https://geniem.com/",
+        "role": "Developer"
     }
   ],
   "keywords": [
@@ -37,6 +43,7 @@
     "sort-packages": true
   },
   "require": {
+    "php": ">=7.1",
     "ext-json": "*"
   }
 }
