@@ -36,6 +36,9 @@ class Query {
      */
     public static function get_post( $id = null, $args = [] ) {
 
+        $meta_keys = null;
+        $single = null;
+        $output = null;
         global $post;
 
         $defaults = [
@@ -91,6 +94,12 @@ class Query {
      */
     public static function get_acf_post( $id = null, $args = [] ) {
 
+        $current_recursion_level = null;
+        $max_recursion_level = null;
+        $whole_fields = null;
+        $meta_keys = null;
+        $single = null;
+        $output = null;
         global $post;
 
         $defaults = [
@@ -247,6 +256,10 @@ class Query {
      */
     public static function get_posts( $args ) {
 
+        $meta_keys = null;
+        $single = null;
+        $query_object = null;
+        $no_found_rows = null;
         $defaults = self::get_wp_query_defaults();
 
         $options = array_merge( $defaults, $args );
@@ -270,7 +283,7 @@ class Query {
         }
 
         // Get meta for posts
-        if ( count( self::$query->posts ) ) {
+        if ( is_countable(self::$query->posts) ? count( self::$query->posts ) : 0 ) {
             self::get_meta_for_posts( self::$query->posts, $meta_keys, $single );
 
             // Reset the global post data just in case
@@ -296,6 +309,8 @@ class Query {
      */
     public static function get_acf_posts( $args ) {
 
+        $query_object = null;
+        $no_found_rows = null;
         // Some redundancy, but we need these.
         $defaults = self::get_wp_query_defaults();
 

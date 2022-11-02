@@ -33,19 +33,19 @@ class Pagination extends Helper {
 
         $params         = $this->params;
         $data           = (object) [];
-        $pages          = array();
+        $pages          = [];
         $neighbours     = isset( $params->neighbours ) ? (int) $params->neighbours : 3;
         $visible        = 1 + ( 2 * $neighbours );
         $hellip_start   = true;
         $hellip_end     = true;
-        $strings        = isset( $params->strings ) ? $params->strings    : [];
+        $strings        = $params->strings ?? [];
         $cur_page       = isset( $params->page )    ? (int) $params->page : 1;
         $prev_page      = $cur_page - 1;
         $next_page      = $cur_page + 1;
         $per_page       = (int) $params->per_page;
         $items          = (int) $params->items;
         $hash           = $params->hash     ? '#' . $params->hash : '';
-        $this->page_var = $params->page_var ? $params->page_var   : 'paged';
+        $this->page_var = $params->page_var ?: 'paged';
 
         if ( isset( $this->params->data ) ) {
             $custom_data = $this->params->data;
@@ -63,11 +63,9 @@ class Pagination extends Helper {
         $strings  = wp_parse_args( $strings, $defaults );
 
         // Prevent dividing if there are zero items.
+        $page_count = 1;
         if ( $per_page > 0 ) {
             $page_count = (int) ceil( $items / $per_page );
-        }
-        else {
-            $page_count = 1;
         }
 
         $first_page = 1;
@@ -130,7 +128,7 @@ class Pagination extends Helper {
                 $end = $cur_page + $neighbours;
                 if ( $end >= $page_count ) {
                     $end   = $page_count;
-                    $start = $start - ( ( $cur_page + $neighbours ) - $page_count );
+                    $start -= ( ( $cur_page + $neighbours ) - $page_count );
                     if ( $start <= 1 ) {
                         $start        = 1;
                         $hellip_start = '';
@@ -219,7 +217,7 @@ class Pagination extends Helper {
      *
      * @return string
      */
-    public function build_page_link() {
+    public function build_page_link() : string {
         $query_string = filter_var( $_SERVER['QUERY_STRING'], FILTER_SANITIZE_STRING );
         $page_link    = '?';
         // User passed get parameters
@@ -261,7 +259,7 @@ class Pagination extends Helper {
      *
      * @param object $params Helper parameters.
      */
-    public function set_params( $params ) {
+    public function set_params( object $params ) {
         $this->params = $params;
     }
 }

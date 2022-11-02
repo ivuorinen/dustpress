@@ -5,9 +5,9 @@ namespace Dust\Parse
 
     class Parser
     {
-        const T_SECTION_BEGIN = '{';
-        const T_SECTION_END = '}';
-        const T_SECTION_END_TAG_BEGIN = '/';
+        public const T_SECTION_BEGIN = '{';
+        public const T_SECTION_END = '}';
+        public const T_SECTION_END_TAG_BEGIN = '/';
 
         /**
          * @var \Dust\Parse\ParserOptions
@@ -676,14 +676,14 @@ namespace Dust\Parse
             }
             //next non whitespace
             $curr = $offset + 1;
-            while(strlen($str) > $curr && strpos(" \t\v\f", $str[ $curr ]) !== false)
+            while(strlen($str) > $curr && strpos(" \t\v\f", (string) $str[ $curr ]) !== false)
                 $curr++;
             if(strlen($str) <= $curr)
             {
                 return false;
             }
             //so, it does start with one of these?
-            if(strpos('#?^><+%:@/~%', $str[ $curr ]) === false)
+            if(strpos('#?^><+%:@/~%', (string) $str[ $curr ]) === false)
             {
                 //well then just check for any reference
                 $newCtx = new ParserContext($str);

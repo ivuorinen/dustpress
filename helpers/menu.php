@@ -13,7 +13,7 @@ class Menu extends Helper {
     /**
      * The object cache key prefix.
      */
-    const CACHE_KEY_PREFIX = 'dustpress_menu_helper_';
+    public const CACHE_KEY_PREFIX = 'dustpress_menu_helper_';
 
     /**
      * Renders and outputs the menu HTML.
@@ -22,6 +22,7 @@ class Menu extends Helper {
      */
     public function output() {
 
+        $menu_id = null;
         if ( ! isset( $this->params->menu_name ) && ! isset( $this->params->menu_id ) ) {
             return $this->chunk->write( 'DustPress menu helper error: No menu specified.' );
         } else if ( isset( $this->params->menu_id ) ) {
@@ -174,7 +175,7 @@ class Menu extends Helper {
         $parent_id = 0;
 
         if ( $parent ) {
-            if ( count( $menu_items ) > 0 ) {
+            if ( (is_countable($menu_items) ? count( $menu_items ) : 0) > 0 ) {
                 foreach ( $menu_items as $item ) {
                     if ( $item->object_id == $parent ) {
                         $parent_id = $item->ID;

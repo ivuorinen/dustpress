@@ -19,28 +19,24 @@ class Model {
      *
      * @var array
      */
-    public $data;
+    public array $data;
 
     /**
      * Class name
      *
      * @var string
      */
-    protected $class_name;
+    protected string $class_name;
 
     /**
      * Arguments of this instance
-     *
-     * @var array
      */
-    private $args = [];
+    private array $args = [];
 
     /**
      * Instances of all submodels initiated from this class
-     *
-     * @var object
      */
-    private $submodels;
+    private object $submodels;
 
     /**
      * Possible parent model
@@ -58,17 +54,13 @@ class Model {
 
     /**
      * Temporary hash key
-     *
-     * @var string
      */
-    private $hash;
+    private ?string $hash = null;
 
     /**
      * Is execution terminated
-     *
-     * @var boolean
      */
-    private $terminated;
+    private ?bool $terminated = null;
 
     // Called submodels
     protected $called_subs;
@@ -81,7 +73,7 @@ class Model {
      *
      * @var array
      */
-    protected $ttl = [];
+    protected array $ttl = [];
 
     /**
      * Constructor for DustPress model class.
@@ -92,7 +84,7 @@ class Model {
      * @param array $args   Model arguments.
      * @param mixed $parent Set model parent.
      */
-    public function __construct( $args = [], $parent = null ) {
+    public function __construct( array $args = [], $parent = null ) {
         $this->fix_deprecated();
 
         if ( ! empty( $args ) ) {
@@ -149,7 +141,7 @@ class Model {
      *
      * @return \Dustpress\Model
      */
-    public function get_submodel( $name ) {
+    public function get_submodel( string $name ) : Model {
         return $this->submodels->{$name};
     }
 
@@ -192,7 +184,7 @@ class Model {
      * @date   16/02/2017
      * @since  1.5.5
      */
-    public function fix_deprecated() {
+    public function fix_deprecated() : void {
         // Reassign deprecated "allowed_functions" to "api".
         if ( isset( $this->allowed_functions ) ) {
             error_log( 'DustPress: Model property "allowed_functions" is deprecated, use "api" instead.' );
@@ -213,6 +205,7 @@ class Model {
      * @throws \ReflectionException If class does not have method, throw exception.
      */
     public function fetch_data( $functions = null, $tidy = false ) {
+        $tidy_data        = null;
         $this->class_name = get_class( $this );
 
         // Create a place to store the wanted data in the global data structure.
@@ -246,8 +239,8 @@ class Model {
                         "error" => sprintf(
                             "Method '%s' is not allowed to be run via AJAX or does not exist.",
                             $function
-                        )
-                    ] ) );
+                        ),
+                    ], JSON_THROW_ON_ERROR ) );
                 }
             }
         }
@@ -272,8 +265,8 @@ class Model {
                             "error" => sprintf(
                                 "Method '%s' is not allowed to be run via AJAX or does not exist.",
                                 $method_item
-                            )
-                        ] ) );
+                            ),
+                        ], JSON_THROW_ON_ERROR ) );
                     }
                     if ( $reflection->isProtected() || $reflection->isPrivate() ) {
                         $private_methods[] = $method_item;
@@ -283,7 +276,8 @@ class Model {
                     // If the method has parameters, it should be run manually
                     if ( $reflection->getNumberOfParameters() > 0 ) {
                         unset( $class_methods[ $index ] );
-                    } else {
+                    }
+                    else {
                         $class_methods[ $index ] = [ $class, $method_item ];
                     }
 
@@ -298,7 +292,8 @@ class Model {
                 // If the method has parameters, it should be run manually
                 if ( $reflection->getNumberOfParameters() > 0 ) {
                     unset( $class_methods[ $index ] );
-                } else {
+                }
+                else {
                     $class_methods[ $index ] = [ $class, $method_item ];
                 }
             }
@@ -341,7 +336,8 @@ class Model {
 
                         if ( $tidy ) {
                             $tidy_data->{$m[1]} = $data;
-                        } else {
+                        }
+                        else {
                             if ( ! is_null( $data ) ) {
                                 $content                         = (array) $this->data[ $this->class_name ];
                                 $content[ $method ]              = $data;
@@ -349,7 +345,8 @@ class Model {
                             }
                         }
                     }
-                } elseif ( is_callable( $m ) ) {
+                }
+                elseif ( is_callable( $m ) ) {
                     if ( $m === '__construct' ) {
                         continue;
                     }
@@ -365,7 +362,8 @@ class Model {
                     if ( ! is_null( $data ) ) {
                         if ( $tidy ) {
                             $tidy_data->{$method} = $data;
-                        } else {
+                        }
+                        else {
                             $this->data[ $this->class_name ]->{$method} = $data;
                         }
                     }
@@ -425,7 +423,7 @@ class Model {
      * @return array Class Methods.
      * @throws \ReflectionException If class can't be reflected.
      */
-    private function get_class_methods( $class_name, $methods = [] ) {
+    private function get_class_methods( string $class_name, array $methods = [] ) {
         $rc   = new \ReflectionClass( $class_name );
         $rmpu = $rc->getMethods();
 
@@ -444,7 +442,7 @@ class Model {
 
         $class_parent = get_parent_class( $class_name );
 
-        if ( ! empty( $class_parent ) && 'DustPress\Model' !== $class_parent ) {
+        if ( ! empty( $class_parent ) && \DustPress\Model::class !== $class_parent ) {
             $methods = $this->get_class_methods( $class_parent, $methods );
         }
 
@@ -463,7 +461,7 @@ class Model {
      *
      * @throws \Exception If provided submodel name is not a string.
      */
-    public function bind_sub( $name, $args = null, $cache_sub = true ) {
+    public function bind_sub( string $name, $args = null, $cache_sub = true ) {
         if ( $this->terminated === true ) {
             return;
         }
@@ -531,11 +529,11 @@ class Model {
      * @date  2015-03-17
      * @since 0.0.1
      *
-     * @param mixed  $data  Data to bind to the model key.
-     * @param string $key   Key to bind to.
-     * @param string $model Model to bind data to.
+     * @param mixed       $data  Data to bind to the model key.
+     * @param string|null $key   Key to bind to.
+     * @param string|null $model Model to bind data to.
      */
-    public function bind( $data, $key = null, $model = null ) {
+    public function bind( $data, string $key = null, string $model = null ) : void {
         if ( ! $key ) {
             die( 'DustPress error: You need to specify the key if you use bind(). Use return if you want to use the function name.' );
         }

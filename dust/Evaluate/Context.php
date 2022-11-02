@@ -76,7 +76,7 @@ class Context
             $resolved = $this->resolveLocal($identifier, $this->head->forcedParent, $forceArrayLookup);
         }
         //if it's still not there, we can try parameters
-        if($resolved === NULL && count($this->head->params) > 0)
+        if($resolved === NULL && (is_countable($this->head->params) ? count($this->head->params) : 0) > 0)
         {
             //just force an array lookup
             $resolved = $this->resolveLocal($identifier, $this->head->params, true);
@@ -98,7 +98,7 @@ class Context
         }
         elseif($identifier->number != NULL)
         {
-            $key = intval($identifier->number);
+            $key = (int) $identifier->number;
             //if this isn't an array lookup, just return the number
             if(!$forceArrayLookup)
             {
@@ -112,7 +112,7 @@ class Context
             $result = $parentObject;
         }
         else if ( $key === "length" ) {
-            return count( $parentObject );
+            return is_countable($parentObject) ? count( $parentObject ) : 0;
         }
         //try to find on object (if we aren't forcing array lookup)
         if(!$forceArrayLookup && $key !== NULL)

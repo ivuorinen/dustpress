@@ -7,11 +7,10 @@ class State
 
     public $forcedParent;
 
-    public $params;
+    public $params = [];
 
     public function __construct($value) {
         $this->value = $value;
-        $this->params = [];
     }
 
 }

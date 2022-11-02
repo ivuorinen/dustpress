@@ -1,26 +1,23 @@
 <?php
-namespace Dust\Evaluate
-{
+
+namespace Dust\Evaluate {
+
     use Dust\Ast;
 
-    class Bodies implements \ArrayAccess
-    {
-        /**
-         * @var \Dust\Ast\Section
-         */
-        private $section;
+    class Bodies implements \ArrayAccess {
+        private \Dust\Ast\Section $section;
 
         /**
          * @var \Dust\Ast\Body
          */
-        public $block;
+        public Ast\Body $block;
 
         /**
          * @param \Dust\Ast\Section $section
          */
-        public function __construct(Ast\Section $section) {
+        public function __construct( Ast\Section $section ) {
             $this->section = $section;
-            $this->block = $section->body;
+            $this->block   = $section->body;
         }
 
         /**
@@ -28,8 +25,8 @@ namespace Dust\Evaluate
          *
          * @return bool
          */
-        public function offsetExists($offset) {
-            return $this[ $offset ] != NULL;
+        public function offsetExists( $offset ) : bool {
+            return $this[ $offset ] !== null;
         }
 
         /**
@@ -37,16 +34,17 @@ namespace Dust\Evaluate
          *
          * @return null
          */
-        public function offsetGet($offset) {
-            for($i = 0; $i < count($this->section->bodies); $i++)
-            {
-                if($this->section->bodies[ $i ]->key == $offset)
-                {
+        public function offsetGet( $offset ) {
+            for (
+                $i = 0;
+                $i < ( is_countable( $this->section->bodies ) ? count( $this->section->bodies ) : 0 ); $i ++
+            ) {
+                if ( $this->section->bodies[ $i ]->key == $offset ) {
                     return $this->section->bodies[ $i ]->body;
                 }
             }
 
-            return NULL;
+            return null;
         }
 
         /**
@@ -55,8 +53,8 @@ namespace Dust\Evaluate
          *
          * @throws \Dust\Evaluate\EvaluateException
          */
-        public function offsetSet($offset, $value) {
-            throw new EvaluateException($this->section, 'Unsupported set on bodies');
+        public function offsetSet( $offset, $value ) {
+            throw new EvaluateException( $this->section, 'Unsupported set on bodies' );
         }
 
         /**
@@ -64,10 +62,9 @@ namespace Dust\Evaluate
          *
          * @throws \Dust\Evaluate\EvaluateException
          */
-        public function offsetUnset($offset) {
-            throw new EvaluateException($this->section, 'Unsupported unset on bodies');
+        public function offsetUnset( $offset ) {
+            throw new EvaluateException( $this->section, 'Unsupported unset on bodies' );
         }
 
     }
 }
-

@@ -26,7 +26,6 @@ class Password extends Helper {
         }
 
         if ( post_password_required( $id ) ) {
-
             // If used like {@password no_form=anything} the contents are hidden,
             // but no password_form partial will be rendered.
             if ( $no_form ) {

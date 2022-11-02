@@ -285,9 +285,7 @@ class Image extends Helper {
 
         // Either use the srcset array that is given
         // or fetch the urls and widths using the WP sizes.
-        $srcset_array = ( isset( $image_data['srcset'] )
-                            ? $image_data['srcset']
-                            : $this->get_wp_image_sizes_array( $image_data )
+        $srcset_array = ( $image_data['srcset'] ?? $this->get_wp_image_sizes_array( $image_data )
                         );
 
         // Check that the srcset is given as an array.
@@ -333,16 +331,14 @@ class Image extends Helper {
         global $_wp_additional_image_sizes;
 
         // The default wordpress image sizes. Exclude the thumbnail size.
-        $default_image_sizes = array( 'medium', 'medium_large', 'large' );
+        $default_image_sizes = ['medium', 'medium_large', 'large'];
 
         // Loop through the sizes and get the corresponding options from the db.
         foreach ( $default_image_sizes as $size ) {
 
-            $image_sizes[ $size ]['width'] = intval( get_option( "{$size}_size_w" ) );
-            $image_sizes[ $size ]['height'] = intval( get_option( "{$size}_size_h" ) );
-            $image_sizes[ $size ]['crop'] = ( get_option( "{$size}_crop" )
-                                                ? get_option( "{$size}_crop" )
-                                                : false
+            $image_sizes[ $size ]['width'] = (int) get_option( "{$size}_size_w" );
+            $image_sizes[ $size ]['height'] = (int) get_option( "{$size}_size_h" );
+            $image_sizes[ $size ]['crop'] = ( get_option( "{$size}_crop" ) ?: false
                                             );
         }
 

@@ -18,19 +18,17 @@ namespace Dust\Evaluate
 
         public $tapStack;
 
-        public $pendingNamedBlocks;
+        public $pendingNamedBlocks = [];
 
         public $pendingNamedBlockOffset = 0;
 
-        public $setNamedStrings;
+        public $setNamedStrings = [];
 
         /**
          * @param \Dust\Evaluate\Evaluator $evaluator
          */
         public function __construct(Evaluator $evaluator) {
             $this->evaluator = $evaluator;
-            $this->pendingNamedBlocks = [];
-            $this->setNamedStrings = [];
         }
 
         public function newChild() {
@@ -89,10 +87,7 @@ namespace Dust\Evaluate
                 //get all blocks
                 $blocks = $this->pendingNamedBlocks[ $name ];
                 //we need to reverse the order to replace backwards first to keep line counts right
-                usort($blocks, function ($a, $b)
-                {
-                    return $a->begin > $b->begin ? -1 : 1;
-                });
+                usort($blocks, fn($a, $b) => $a->begin > $b->begin ? -1 : 1);
                 //hold on to pre-count
                 $preCount = strlen($this->out);
                 //loop and splice string

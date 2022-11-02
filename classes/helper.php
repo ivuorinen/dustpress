@@ -16,25 +16,25 @@ class Helper {
      *
      * @var \Dust\Evaluate\Chunk
      */
-    protected $chunk;
+    protected \Dust\Evaluate\Chunk $chunk;
     /**
      * Context object.
      *
      * @var \Dust\Evaluate\Context
      */
-    protected $context;
+    protected \Dust\Evaluate\Context $context;
     /**
      * Bodies to evaluate.
      *
      * @var \Dust\Evaluate\Bodies
      */
-    protected $bodies;
+    protected \Dust\Evaluate\Bodies $bodies;
     /**
      * Parameters.
      *
      * @var \Dust\Evaluate\Parameters
      */
-    protected $params;
+    protected \Dust\Evaluate\Parameters $params;
 
     /**
      * Invoice Helper
@@ -44,15 +44,14 @@ class Helper {
      * @param \Dust\Evaluate\Bodies     $bodies  Bodies to evaluate.
      * @param \Dust\Evaluate\Parameters $params  Parameters object.
      *
-     * @return \Dust\Evaluate\Chunk|void
+     * @return \Dust\Evaluate\Chunk|null
      */
     public function __invoke(
         \Dust\Evaluate\Chunk $chunk,
         \Dust\Evaluate\Context $context,
         \Dust\Evaluate\Bodies $bodies,
         \Dust\Evaluate\Parameters $params
-    ) {
-
+    ) : ?\Dust\Evaluate\Chunk {
         $this->chunk   = $chunk;
         $this->context = $context;
         $this->bodies  = $bodies;
@@ -60,7 +59,8 @@ class Helper {
 
         if ( isset( $this->bodies->dummy ) && method_exists( $this, 'prerun' ) ) {
             $this->prerun();
-            return;
+
+            return null;
         }
 
         if ( ! isset( $this->bodies->dummy ) && method_exists( $this, 'init' ) ) {
@@ -69,5 +69,7 @@ class Helper {
         if ( ! isset( $this->bodies->dummy ) && method_exists( $this, 'output' ) ) {
             return $this->chunk->write( $this->output() );
         }
+
+        return null;
     }
 }

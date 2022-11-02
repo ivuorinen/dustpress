@@ -2,6 +2,7 @@
 /**
  * The Contains helper
  */
+
 namespace DustPress;
 
 /**
@@ -14,13 +15,15 @@ class Contains extends \Dust\Helper\Comparison {
      * Implements the isValid function of the Comparison class.
      * Checks whether a given value is in an array/object.
      *
-     * @param  object|array $key   The array or object to look in.
-     * @param  mixed        $value The value to look for.
+     * @param object|array $key   The array or object to look in.
+     * @param mixed        $value The value to look for.
+     *
      * @return boolean
      */
-    public function isValid( $key, $value ) {
+    public function isValid( $key, $value ) : bool {
         $haystack = (array) $key;
-        return in_array( $value, $haystack );
+
+        return in_array( $value, $haystack, false );
     }
 }
 

@@ -2,7 +2,7 @@
 namespace DustPress;
 
 class Set extends Helper {
-    private $allowed_methods = [
+    private array $allowed_methods = [
         "add",
         "subtract",
         "multiply",

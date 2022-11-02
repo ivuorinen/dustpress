@@ -17,7 +17,7 @@
     {
         "name": "Ismo Vuorinen",
         "email": "ismo.vuorinen@geniem.com",
-        "homepage": "https://geniem.com/",
+        "homepage": "https://github.com/ivuorinen",
         "role": "Developer"
     }
   ],
@@ -25,15 +25,29 @@
     "wordpress", "dustjs", "dustpress", "theme", "framework", "javascript"
   ],
   "license": "GPL-3.0",
-  "minimum-stability": "dev",
+  "minimum-stability": "stable",
   "autoload": {
+    "psr-4": {
+      "\\Dust\\": "dust/"
+    },
+    "classmap": [
+      "classes",
+      "helpers",
+      "models"
+    ],
     "files": ["dustpress.php"]
   },
   "require": {
-    "php": ">=7.1",
+    "php": ">=7.4",
     "ext-json": "*"
   },
   "conflict": {
     "devgeniem/dustpress-debugger": "<1.7.0"
+  },
+  "require-dev": {
+    "rector/rector": "^0.14.6"
+  },
+  "scripts": {
+    "rector": "vendor/bin/rector"
   }
 }
